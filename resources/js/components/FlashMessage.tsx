@@ -11,7 +11,9 @@ interface PageProps extends InertiaPageProps {
 }
 
 export default function FlashMessage() {
-    const { flash } = usePage<PageProps>().props;
+    const page = usePage<PageProps>();
+    const { flash } = page.props;
+
     const [visible, setVisible] = useState(false);
 
     const message = flash.success || flash.error;
@@ -30,7 +32,7 @@ export default function FlashMessage() {
         }, 5000);
 
         return () => clearTimeout(timeout);
-    }, [message]);
+    }, [message, page.url]);
 
     useEffect(() => {
         if (!visible) return;
@@ -55,7 +57,7 @@ export default function FlashMessage() {
     return (
         <div
             className="fixed inset-0 z-100 flex items-center
-                justify-center bg-black/50 p-4 backdrop-blur-sm"
+                justify-center bg-black/50 p-4"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget) {
                     setVisible(false);
@@ -69,15 +71,14 @@ export default function FlashMessage() {
                 aria-describedby="flash-description"
                 className="w-full max-w-sm animate-in zoom-in-95
                     fade-in duration-200 rounded-2xl border
-                    border-gray-200 bg-white p-6 shadow-2xl
-                    dark:border-gray-700 dark:bg-gray-900"
+                    border-border bg-background p-6 shadow-2xl "
             >
                 <div className="flex justify-end">
                     <button
                         type="button"
                         onClick={() => setVisible(false)}
                         aria-label="Cerrar alerta"
-                        className="rounded-lg p-1 text-gray-400
+                        className="rounded-lg p-1 text-muted
                             transition hover:bg-gray-100 hover:text-gray-700
                             dark:hover:bg-gray-800 dark:hover:text-gray-200"
                     >

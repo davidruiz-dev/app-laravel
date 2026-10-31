@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_costs', function (Blueprint $table) {
+        Schema::create('expenses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->string('type');
             $table->decimal('amount', 10, 2);
-            $table->string('type_cost');
+            $table->string('description')->nullable();
+            $table->dateTime('expense_date');
             $table->timestamps();
         });
     }

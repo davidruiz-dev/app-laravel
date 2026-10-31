@@ -24,14 +24,14 @@ class DashboardStatsService
             ->endOfMonth();
 
         $totalRevenue = Payment::query()
-            ->whereBetween('created_at', [
+            ->whereBetween('paid_at', [
                 $monthStart,
                 $monthEnd,
             ])
             ->sum('amount');
 
         $previousRevenue = Payment::query()
-            ->whereBetween('created_at', [
+            ->whereBetween('paid_at', [
                 $previousStart,
                 $previousEnd,
             ])

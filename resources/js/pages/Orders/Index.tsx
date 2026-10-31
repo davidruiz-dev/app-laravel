@@ -2,14 +2,14 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Layout from '@/layouts/Layout'
 import { Ban, Check, LoaderCircle, PlusIcon, Search, Timer } from 'lucide-react'
-import { Link, router } from '@inertiajs/react'
+import { Link } from '@inertiajs/react'
 import TablePagination, { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/Table'
 import { formatDateTime } from '@/utils/date'
-import { OrderStatCard } from '@/components/Orders/OrderStatCard'
+import { OrderStatCard } from '@/features/Orders/components/OrderStatCard'
 import { orderStatusTypeLabels } from '@/utils/order.util'
-import FlashMessage from '@/components/FlashMessage'
 import { Order, OrdersOverview } from '@/features/Orders/types/order.types'
 import { Paginated } from '@/types'
+import OrdersFilter from '@/features/Orders/components/OrdersFilter'
 
 interface Props {
   orders: Paginated<Order>;
@@ -23,12 +23,13 @@ export default function Index({ orders, overview }: Props) {
       <div className="space-y-4">
         <div className="flex justify-between items-end flex-wrap gap-4">
           <div>
-            <h1 className='text-3xl font-bold'>Pedidos</h1>
-            <p className='text-muted'>Toda la lista de pedidos registrados en el sistema.</p>
+            <h1 className='text-2xl md:text-3xl font-bold'>Pedidos</h1>
+            <p className='text-muted text-sm md:text-base'>Toda la lista de pedidos registrados en el sistema.</p>
           </div>
           <Link href={'/orders/create'}>
-            <Button>
-              <PlusIcon className='size-5' /> Nuevo pedido
+            <Button size="md">
+              <PlusIcon className='size-5' />
+              <span className='hidden md:block'>Nuevo pedido</span>
             </Button>
           </Link>
         </div>
@@ -40,9 +41,7 @@ export default function Index({ orders, overview }: Props) {
           <OrderStatCard value={overview.total_cancelled} label="Pedidos cancelados" icon={Ban} />
         </div>
 
-        <div className="flex gap-4 w-6/12">
-          <Input leftIcon={<Search className='size-4 text-muted' />} placeholder='Buscar por cliente o descripción' />
-        </div>
+        <OrdersFilter />
 
         <Table>
           <TableHeader>
@@ -73,10 +72,16 @@ export default function Index({ orders, overview }: Props) {
                 </TableCell>
               </TableRow>
             ))}
+            {orders.data.length === 0 && (
+              <TableCell colSpan={5}>
+                <p className='text-center text-muted'>No se han encontrado pedidos</p>
+              </TableCell>
+            )}
           </TableBody>
         </Table>
 
         <TablePagination
+          showing={orders.data.length}
           links={orders.links}
           total={orders.total}
           current_page={orders.current_page}

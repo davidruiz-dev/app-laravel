@@ -122,8 +122,8 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
     <Layout title="Cliente">
       <div className="space-y-5">
         <div>
-          <h1 className="text-3xl font-semibold">Detalles del cliente</h1>
-          <p className="text-muted">Información del cliente y todos los pedidos que ha realizado a lo largo del tiempo.</p>
+          <h1 className="text-xl md:text-3xl font-semibold">Detalles del cliente</h1>
+          <p className="text-muted text-sm md:text-base">Información del cliente y todos los pedidos que ha realizado a lo largo del tiempo.</p>
         </div>
 
         <Card>
@@ -188,6 +188,7 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
               )}
 
               <TablePagination
+                showing={orders.data.length}
                 total={orders.total}
                 links={orders.links}
                 current_page={orders.current_page}

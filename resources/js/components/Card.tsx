@@ -1,45 +1,59 @@
-import { ReactNode } from "react"
+import { ReactNode, ComponentPropsWithoutRef } from "react";
 
-interface Props {
-  children: ReactNode
-}
+type CardProps = ComponentPropsWithoutRef<"div">;
+type CardTitleProps = ComponentPropsWithoutRef<"h3">;
 
-export const Card = ({ children }: Props) => {
-  return (
-    <div className="rounded-lg bg-surface border border-border overflow-hidden">
-      {children}
-    </div>
-  )
-}
+export const Card = ({ children, ...props }: CardProps) => {
+    return (
+        <div
+            {...props}
+            className={`rounded-lg bg-surface border border-border ${props.className ?? ""}`}
+        >
+            {children}
+        </div>
+    );
+};
 
-export const CardHeader = ({ children }: Props) => {
-  return (
-    <div className="px-4 py-3 border-b border-border">
-      {children}
-    </div>
-  )
-}
+export const CardHeader = ({ children, ...props }: CardProps) => {
+    return (
+        <div
+            {...props}
+            className={`px-4 py-3 border-b border-border ${props.className ?? ""}`}
+        >
+            {children}
+        </div>
+    );
+};
 
-export const CardTitle = ({ children }: Props) => {
-  return (
-    <h3 className="text-md font-semibold text-foreground">
-      {children}
-    </h3>
-  )
-}
+export const CardTitle = ({ children, ...props }: CardTitleProps) => {
+    return (
+        <h3
+            {...props}
+            className={`text-md font-semibold text-foreground ${props.className ?? ""}`}
+        >
+            {children}
+        </h3>
+    );
+};
 
-export const CardContent = ({ children }: Props) => {
-  return (
-    <div className="p-4">
-      {children}
-    </div>
-  )
-}
+export const CardContent = ({ children, ...props }: CardProps) => {
+    return (
+        <div
+            {...props}
+            className={`p-4 ${props.className ?? ""}`}
+        >
+            {children}
+        </div>
+    );
+};
 
-export const CardFooter = ({ children }: Props) => {
-  return (
-    <div className="p-4 border-t border-border">
-      {children}
-    </div>
-  )
-}
+export const CardFooter = ({ children, ...props }: CardProps) => {
+    return (
+        <div
+            {...props}
+            className={`p-4 border-t border-border ${props.className ?? ""}`}
+        >
+            {children}
+        </div>
+    );
+};

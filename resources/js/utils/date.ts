@@ -34,6 +34,15 @@ export function formatDate(date: string): string {
     }).format(new Date(date))
 }
 
+export function formatDateShort(date: string): string {
+    return new Intl.DateTimeFormat('es-PE', {
+        timeZone: 'America/Lima',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).format(new Date(date))
+}
+
 
 export function getRemainingDays(date: string): number {
     const fechaVencimiento = new Date(date);

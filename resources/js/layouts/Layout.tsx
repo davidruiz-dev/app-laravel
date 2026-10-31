@@ -4,6 +4,7 @@ import { Link, router, usePage } from "@inertiajs/react";
 import {
     BoxIcon,
     Calendar,
+    ChartBar,
     Kanban,
     LayoutDashboard,
     LogOut,
@@ -24,19 +25,31 @@ interface Props {
 }
 
 const items = [
-    { url: "/", title: "Dashboard", icon: <LayoutDashboard className="size-5" /> },
-    { url: "/orders/calendar", title: "Calendario", icon: <Calendar className="size-5" /> },
-    { url: "/orders/kanban", title: "Kanban", icon: <Kanban className="size-5" /> },
+    { url: "/dashboard", title: "Dashboard", icon: <LayoutDashboard className="size-5" /> },
+    { url: "/calendar", title: "Calendario", icon: <Calendar className="size-5" /> },
+    { url: "/kanban", title: "Tablero", icon: <Kanban className="size-5" /> },
     { url: "/orders", title: "Pedidos", icon: <BoxIcon className="size-5" /> },
     { url: "/customers", title: "Clientes", icon: <Users2Icon className="size-5" /> },
     { url: "/categories", title: "Categorías", icon: <TagIcon className="size-5" /> },
     { url: "/expenses", title: "Gastos", icon: <Wallet className="size-5" /> },
+    { url: "/reports", title: "Reportes", icon: <ChartBar className="size-5" /> },
 ];
 
 export default function Layout({ children, title }: Props) {
-    const { auth } = usePage().props;
+    const { auth, } = usePage().props;
     const currentUser = auth.user;
     const [menuOpen, setMenuOpen] = useState(false);
+
+    const { url } = usePage()
+
+    const isActive = (path: string) => {
+        const currentPath = url.split('?')[0]
+        if (path === '/') {
+            return currentPath === '/'
+        }
+        return currentPath === path ||
+            currentPath.startsWith(`${path}/`)
+    }
 
     const logout = () => {
         router.post("/logout");
@@ -123,9 +136,9 @@ export default function Layout({ children, title }: Props) {
                             key={item.url}
                             href={item.url}
                             onClick={closeMenu}
-                            className="flex gap-2.5 items-center rounded-md
+                            className={`flex gap-2.5 items-center rounded-md
                                 px-2.5 py-3 hover:bg-background
-                                text-sm "
+                                text-sm ${isActive(item.url) ? 'bg-background' : ''}`}
                         >
                             {item.icon}
                             {item.title}
@@ -140,7 +153,7 @@ export default function Layout({ children, title }: Props) {
                         rounded-md px-2.5 py-3 hover:bg-background
                         text-sm"
                 >
-                    <LogOut className="size-5"/> Cerrar sesión
+                    <LogOut className="size-5" /> Cerrar sesión
                 </button>
             </aside>
 

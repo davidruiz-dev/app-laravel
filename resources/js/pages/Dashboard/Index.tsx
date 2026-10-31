@@ -61,8 +61,8 @@ export default function Dashboard({ stats, revenueChart, chartDays, topCategorie
     <Layout title="Dashboard">
       <div className="space-y-5">
         <div>
-          <h1 className="text-3xl font-semibold">{getTimeMoment()}</h1>
-          <p className="text-muted">Mantente informado con el siguiente resumen.</p>
+          <h1 className="text-2xl md:text-3xl font-semibold">{getTimeMoment()}</h1>
+          <p className="text-muted text-sm md:text-base">Mantente informado con el siguiente resumen.</p>
         </div>
 
         <div className="bg-gray-100 dark:bg-surface rounded-md p-1 w-fit">

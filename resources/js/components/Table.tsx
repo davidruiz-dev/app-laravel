@@ -2,6 +2,7 @@
 import { Link } from "@inertiajs/react";
 import * as React from "react";
 import Button from "./Button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type TableProps = React.ComponentProps<"table">;
 type TableSectionProps = React.ComponentProps<"thead">;
@@ -81,80 +82,92 @@ export function TableCell({
     );
 }
 
-
-type PaginationLink = {
+interface PaginationLink {
     url: string | null;
     label: string;
     active: boolean;
-};
+}
 
-type Props = {
+interface Props {
     links: PaginationLink[];
-    last_page: number | null;
-    current_page: number | null;
+    last_page: number;
+    current_page: number;
     total: number;
-};
+    showing: number;
+}
 
 export default function TablePagination({
     links,
     last_page,
     current_page,
     total,
+    showing,
 }: Props) {
     if (total === 0) {
         return null;
     }
 
     return (
-        <div className="flex flex-col gap-4 sm:flex-row
-                        sm:items-center sm:justify-between">
-            <p className="text-sm text-muted">
-                {total} registros
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted text-center md:text-right">
+                Mostrando {showing} de {total} registros
             </p>
 
             <nav
                 aria-label="Navegación de páginas de la tabla"
-                className="flex flex-wrap items-center gap-1"
+                className="flex flex-wrap items-center justify-center gap-1"
             >
                 {links.map((link, index) => {
                     const label = link.label
-                        .replace('&laquo;', '«')
-                        .replace('&raquo;', '»')
+                        .replace(/&laquo;|&#171;/g, '«')
+                        .replace(/&raquo;|&#187;/g, '»')
                         .replace(/<[^>]*>/g, '')
                         .trim();
+
+                    const isPrevious =
+                        label.toLowerCase().includes('previous') ||
+                        label.startsWith('«');
+
+                    const isNext =
+                        label.toLowerCase().includes('next') ||
+                        label.endsWith('»');
+
+                    const content = isPrevious ? (
+                        <ChevronLeft size={18} aria-hidden="true" />
+                    ) : isNext ? (
+                        <ChevronRight size={18} aria-hidden="true" />
+                    ) : (
+                        <div className="w-5">{label}</div>
+                    );
+
+                    const ariaLabel = isPrevious
+                        ? 'Página anterior'
+                        : isNext
+                          ? 'Página siguiente'
+                          : `Página ${label}`;
 
                     return link.url ? (
                         <Link
                             key={`${link.url}-${index}`}
                             href={link.url}
                             preserveScroll
-                            
-                            aria-current={
-                                link.active ? 'page' : undefined
-                            }
-                            aria-label={
-                                label === '« Previous'
-                                    ? 'Página anterior'
-                                    : label === 'Next »'
-                                        ? 'Página siguiente'
-                                        : `Página ${label}`
-                            }
+                            aria-current={link.active ? 'page' : undefined}
+                            aria-label={ariaLabel}
                         >
                             <Button
                                 variant={link.active ? 'primary' : 'ghost'}
                             >
-                                {label}
+                                {content}
                             </Button>
-
                         </Link>
                     ) : (
                         <Button
                             key={`disabled-${index}`}
-                            aria-disabled="true"
                             variant="ghost"
                             disabled
+                            aria-label={ariaLabel}
                         >
-                            {label}
+                            {content}
                         </Button>
                     );
                 })}

@@ -41,7 +41,7 @@ export default function OrdersKanban({ orders }: OrdersKanbanProps) {
         <Layout title="Kanban">
             <div className="flex justify-between flex-wrap gap-2 items-end mb-4">
                 <div>
-                    <h1 className='text-3xl font-bold'>Kanban</h1>
+                    <h1 className='text-3xl font-bold'>Tablero de pedidos</h1>
                     <p className='text-muted'>Visualiza y trabaja con tus pedidos de manera organizada.</p>
                 </div>
                 <Link href={'/orders/create'}>
@@ -51,7 +51,7 @@ export default function OrdersKanban({ orders }: OrdersKanbanProps) {
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 items-start gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 items-start gap-4">
                 {columns.map((column) => {
 
                     const columnOrders =

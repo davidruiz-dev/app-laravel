@@ -14,9 +14,9 @@ export default function Button({
 }: ButtonProps) {
     const variants = {
         primary: 'bg-primary text-white hover:bg-primary/80',
-        secondary: 'bg-secondary text-white hover:bg-secondary-dark',
+        secondary: 'bg-secondary text-white border border-border',
         danger: 'bg-destructive text-white hover:bg-danger-dark',
-        ghost: 'bg-transparent text-foreground  border border-border',
+        ghost: 'bg-transparent text-foreground border border-border',
     };
 
     const sizes = {
@@ -30,9 +30,9 @@ export default function Button({
             {...props}
             className={`
                 inline-flex items-center justify-center cursor-pointer
-                rounded-lg font-medium
+                rounded-md font-medium
                 transition-colors
-                disabled:pointer-events-none disabled:opacity-50 gap-2
+                disabled:pointer-events-none disabled:opacity-50 gap-2 text-nowrap
                 ${variants[variant]}
                 ${sizes[size]}
                 ${className}

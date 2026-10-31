@@ -1,6 +1,6 @@
 import Button from "@/components/Button";
 import Layout from "@/layouts/Layout";
-import { Eye, Pencil, PlusCircleIcon, Search, Trash } from "lucide-react";
+import { Eye, Pencil, PlusIcon, Search, Trash } from "lucide-react";
 import { useState } from "react";
 import { Link, router } from "@inertiajs/react";
 import { formatDateTime } from "@/utils/date";
@@ -43,7 +43,6 @@ export default function Index({ customers, filters }: Props) {
     router.delete(`/customers/${id}`);
   };
 
-  
 
   const handleCreate = () => {
     setShowModalForm(true);
@@ -67,10 +66,19 @@ export default function Index({ customers, filters }: Props) {
 
   return (
     <Layout title="Clientes">
-      <div className="mb-4">
-        <h1 className="text-3xl font-semibold">Clientes</h1>
-        <p className="text-muted">Lista de todos tus clientes registrados en el sistema.</p>
+      <div className="flex justify-between mb-4 items-center gap-10">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold">Clientes</h1>
+          <p className="text-muted text-sm md:text-base">Lista de todos tus clientes registrados en el sistema.</p>
+        </div>
+
+        <Button onClick={handleCreate} size="md">
+          <PlusIcon />
+          <span className="hidden md:block">Nuevo cliente</span>
+        </Button>
       </div>
+
+
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="relative w-full max-w-sm">
@@ -86,10 +94,7 @@ export default function Index({ customers, filters }: Props) {
             />
           </div>
 
-          <Button onClick={handleCreate}>
-            <PlusCircleIcon />
-            Nuevo cliente
-          </Button>
+
 
         </div>
 
@@ -118,12 +123,12 @@ export default function Index({ customers, filters }: Props) {
                   <TableCell className="flex gap-3 items-center">
                     <Link href={`/customers/${customer.id}`}>
                       <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-300 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400" aria-label={`Edit ${customer.full_name}`}
-                    >
-                      <Eye className="size-4" />
-                      <span className="hidden md:block">Ver más</span>
-                    </button>
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-300 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400" aria-label={`Edit ${customer.full_name}`}
+                      >
+                        <Eye className="size-4" />
+                        <span className="hidden md:block">Ver más</span>
+                      </button>
                     </Link>
 
                     <button
@@ -154,6 +159,7 @@ export default function Index({ customers, filters }: Props) {
           last_page={customers.last_page}
           current_page={customers.current_page}
           total={customers.total}
+          showing={customers.data.length}
         />
 
 

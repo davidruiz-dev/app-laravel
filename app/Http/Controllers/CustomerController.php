@@ -77,16 +77,17 @@ class CustomerController extends Controller
     public function show(Customer $customer)
     {
         $orders = $customer->orders()
-        ->with('items.category')
-        ->latest()
-        ->paginate(10)
-        ->withQueryString();
-        
+            ->with('items.category')
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
         return Inertia::render('Customers/Show', [
             'customer' => $customer,
             'orders' => $orders
         ]);
     }
+
 
     /**
      * Show the form for editing the specified resource.

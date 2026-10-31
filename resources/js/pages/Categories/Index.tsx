@@ -3,7 +3,7 @@ import Modal from "@/components/Modal";
 import Layout from "@/layouts/Layout"
 import { formatDateTime } from '@/utils/date'
 import { router, useForm } from "@inertiajs/react";
-import { PlusCircleIcon, Search, } from 'lucide-react';
+import { PlusCircleIcon, PlusIcon, Search, } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { Category } from "@/features/Categories/types/category.types";
 import { Paginated } from "@/types";
@@ -56,9 +56,15 @@ export default function Index({ categories, filters }: Props) {
 
     return (
         <Layout title="Categorías">
-            <div className="mb-4">
-                <h1 className="text-3xl font-semibold">Categorías</h1>
-                <p className="text-muted">Lista de todos tus categorías registradas en el sistema.</p>
+            <div className="flex mb-4 justify-between gap-10 items-center">
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-semibold">Categorías</h1>
+                    <p className="text-muted text-sm md:text-base">Lista de todos tus categorías registradas en el sistema.</p>
+                </div>
+                <Button onClick={handleCreate} size="md">
+                    <PlusIcon />
+                    <span className="hidden md:block">Nueva categoría</span>
+                </Button>
             </div>
 
             <div className="space-y-4">
@@ -77,10 +83,7 @@ export default function Index({ categories, filters }: Props) {
                         />
                     </div>
 
-                    <Button onClick={handleCreate}>
-                        <PlusCircleIcon />
-                        Nueva categoría
-                    </Button>
+
                 </div>
 
                 <Modal
@@ -93,7 +96,6 @@ export default function Index({ categories, filters }: Props) {
                         onClose={handleClose}
                     />
                 </Modal>
-
 
                 <Table>
                     <TableHeader>
@@ -125,7 +127,7 @@ export default function Index({ categories, filters }: Props) {
                                                     {category.name.charAt(0).toUpperCase()}
                                                 </div> */}
 
-                                        <p className="font-medium text-slate-900 dark:text-slate-100 first-letter:uppercase">
+                                        <p className="font-medium first-letter:uppercase">
                                             {category.name}
                                         </p>
                                     </div>
@@ -133,7 +135,7 @@ export default function Index({ categories, filters }: Props) {
 
                                 {/* Fecha */}
                                 <TableCell>
-                                    <span className="text-slate-600 dark:text-slate-400">
+                                    <span className="">
                                         {formatDateTime(category.created_at)}
                                     </span>
                                 </TableCell>
@@ -188,11 +190,12 @@ export default function Index({ categories, filters }: Props) {
                         ))}
                     </TableBody>
                 </Table>
-                <TablePagination 
+                <TablePagination
                     links={categories.links}
                     total={categories.total}
                     last_page={categories.last_page}
                     current_page={categories.current_page}
+                    showing={categories.data.length}
                 />
             </div>
         </Layout>

@@ -1,11 +1,10 @@
-
 import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
     label: string;
     value: string | number;
     description?: string;
-    icon: LucideIcon;
+    icon?: LucideIcon;
     trend?: number | null;
 }
 
@@ -17,12 +16,15 @@ export default function StatCard({
     trend,
 }: StatCardProps) {
     return (
-        <div className="rounded-xl border border-border bg-surface p-4">
+        <div className="rounded-lg border border-border bg-surface p-4 space-y-2">
             <div className="flex items-center justify-between gap-3">
                 <p className="text-sm text-muted">{label}</p>
-                <div className="flex size-10 items-center justify-center rounded-lg bg-transparent border border-border">
-                    <Icon size={20} className="text-foreground" />
-                </div>
+                {Icon && (
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-transparent border border-border">
+                        <Icon size={18} className="text-foreground" />
+                    </div>
+                )}
+
             </div>
 
             <p className="text-2xl font-semibold tracking-tight ">
@@ -37,9 +39,8 @@ export default function StatCard({
 
             {trend !== undefined && trend !== null && (
                 <p
-                    className={`mt-2 text-xs font-medium ${
-                        trend >= 0 ? "text-green-600" : "text-red-600"
-                    }`}
+                    className={`mt-2 text-xs font-medium ${trend >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
                 >
                     {trend > 0 ? "+" : ""}
                     {trend}% vs. mes anterior

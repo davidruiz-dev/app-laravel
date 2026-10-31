@@ -1,24 +1,24 @@
 export type * from './auth';
 
-export interface Paginated<T> {
-    data: T[];
-    current_page: number;
-    last_page: number;
 
+export interface Paginated<T> {
+    current_page: number;
+    data: T[];
+    first_page_url: string | null;
+    from: number | null;
+    last_page: number;
+    last_page_url: string | null;
     links: {
         url: string | null;
         label: string;
         active: boolean;
     }[];
-    from: number | null;
+    next_page_url: string | null;
+    path: string;
+    per_page: number;
+    prev_page_url: string | null;
     to: number | null;
     total: number;
 }
 
-export interface Payment {
-    id: number;
-    amount: number;
-    method: string;
-    type: string;
-    paid_at: string;
-}
+

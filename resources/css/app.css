@@ -39,3 +39,43 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
 }
+
+
+@media print {
+    .recharts-wrapper,
+    .recharts-surface {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .report-chart {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        display: block;
+    }
+
+    body {
+        background: white !important;
+    }
+
+    /* Ocultar elementos de navegación e interacción */
+    nav,
+    aside,
+    header,
+    .no-print {
+        display: none !important;
+    }
+
+
+    #report-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    @page {
+        size: A4 landscape;
+        margin: 12mm;
+    }
+}

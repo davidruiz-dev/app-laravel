@@ -1,132 +1,164 @@
+import { Check, ChevronDown } from "lucide-react";
 import * as React from "react";
 
-export interface SelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  leftIcon?: React.ReactNode;
-  containerClassName?: string;
-}
+type SelectContextType = {
+  value: string;
+  setValue: (value: string) => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+};
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  (
-    {
-      label,
-      error,
-      hint,
-      leftIcon,
-      containerClassName = "",
-      className = "",
-      id,
-      disabled,
-      children,
-      ...props
-    },
-    ref
-  ) => {
-    const generatedId = React.useId();
-    const selectId = id ?? generatedId;
+const SelectContext =
+  React.createContext<SelectContextType | null>(null);
 
-    const hasError = Boolean(error);
+function useSelect() {
+  const context = React.useContext(SelectContext);
 
-    return (
-      <div className={`w-full ${containerClassName}`}>
-        {label && (
-          <label
-            htmlFor={selectId}
-            className="mb-1.5 block text-sm font-medium text-foreground"
-          >
-            {label}
-          </label>
-        )}
-
-        <div className="relative">
-          {leftIcon && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 text-muted-foreground">
-              {leftIcon}
-            </div>
-          )}
-
-          <select
-            ref={ref}
-            id={selectId}
-            disabled={disabled}
-            aria-invalid={hasError}
-            aria-describedby={
-              error
-                ? `${selectId}-error`
-                : hint
-                  ? `${selectId}-hint`
-                  : undefined
-            }
-            className={[
-              "block w-full appearance-none rounded-lg border",
-              "bg-surface px-3 py-2.5 pr-10",
-              "text-sm text-foreground",
-              "outline-none transition-colors",
-              "cursor-pointer",
-              "focus:ring-2",
-              "disabled:cursor-not-allowed disabled:opacity-50",
-              leftIcon ? "pl-10" : "",
-              hasError
-                ? [
-                    "border-red-500",
-                    "focus:border-red-500",
-                    "focus:ring-red-500/20",
-                  ].join(" ")
-                : [
-                    "border-border",
-                    "focus:border-primary",
-                    "focus:ring-primary/20",
-                  ].join(" "),
-              className,
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            {...props}
-          >
-            {children}
-          </select>
-
-          {/* Chevron */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="h-4 w-4"
-              aria-hidden="true"
-            >
-              <path
-                fillRule="evenodd"
-                d="M5.22 7.72a.75.75 0 0 1 1.06 0L10 11.44l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.78a.75.75 0 0 1 0-1.06Z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </div>
-        </div>
-
-        {error ? (
-          <p
-            id={`${selectId}-error`}
-            className="mt-1.5 text-sm text-red-500"
-          >
-            {error}
-          </p>
-        ) : hint ? (
-          <p
-            id={`${selectId}-hint`}
-            className="mt-1.5 text-sm text-muted-foreground"
-          >
-            {hint}
-          </p>
-        ) : null}
-      </div>
+  if (!context) {
+    throw new Error(
+      "Select components must be inside Select"
     );
   }
-);
 
-Select.displayName = "Select";
+  return context;
+}
 
-export default Select;
+type SelectProps = {
+  value: string;
+  onValueChange: (value: string) => void;
+  children: React.ReactNode;
+};
+
+export function Select({
+  value,
+  onValueChange,
+  children,
+}: SelectProps) {
+  const [open, setOpen] = React.useState(false);
+
+  const context = React.useMemo(
+    () => ({
+      value,
+      setValue: onValueChange,
+      open,
+      setOpen,
+    }),
+    [value, onValueChange, open]
+  );
+
+  return (
+    <SelectContext.Provider value={context}>
+      <div className="relative inline-block min-w-56 w-full" >
+        {children}
+      </div>
+    </SelectContext.Provider>
+  );
+}
+
+export function SelectTrigger({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { open, setOpen } = useSelect();
+
+  return (
+    <button
+      type="button"
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      onClick={() => setOpen(!open)}
+      className="flex w-full items-center justify-between
+        rounded-md border border-border bg-surface px-3 py-2.5
+        text-sm hover:bg-background"
+    >
+      {children}
+      <span aria-hidden="true"><ChevronDown size={14}/></span>
+    </button>
+  );
+}
+
+export function SelectValue({
+  placeholder = "Seleccionar...",
+  children,
+}: {
+  placeholder?: string;
+  children?: React.ReactNode;
+}) {
+  const { value } = useSelect();
+
+  return (
+    <span
+      className={`${
+        value ? "text-foreground" : "text-gray-400"
+      } first-letter:uppercase`}
+    >
+      {value ? children ?? value : placeholder}
+    </span>
+  );
+}
+
+export function SelectContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { open, setOpen } = useSelect();
+
+  if (!open) return null;
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Cerrar opciones"
+        className="fixed inset-0 z-50 cursor-default"
+        onClick={() => setOpen(false)}
+      />
+
+      <div
+        role="listbox"
+        className="absolute left-0 top-full z-100 mt-1
+          w-full rounded-md border border-border
+          bg-surface p-1 shadow-lg"
+      >
+        {children}
+      </div>
+    </>
+  );
+}
+
+export function SelectItem({
+  value,
+  children,
+}: {
+  value: string;
+  children: React.ReactNode;
+}) {
+  const context = useSelect();
+  const selected = context.value === value;
+
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      onClick={() => {
+        context.setValue(value);
+        context.setOpen(false);
+      }}
+      className={`flex w-full items-center justify-between
+        rounded-sm px-3 py-2 text-left text-sm
+        ${
+          selected
+            ? "bg-background text-foreground "
+            : " hover:bg-background"
+        }`}
+    >
+      {children}
+      {selected && <span aria-hidden="true">
+          <Check size={15}/>
+        </span>}
+    </button>
+  );
+}

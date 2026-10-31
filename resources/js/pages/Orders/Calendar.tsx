@@ -1,7 +1,7 @@
 import Button from "@/components/Button";
 import { Order } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
-import { router } from "@inertiajs/react";
+import { Link, router } from "@inertiajs/react";
 import {
     ChevronLeft,
     ChevronRight,
@@ -106,7 +106,7 @@ export default function Calendar({
 
     function navigate(date: Date, view = calendarView) {
         router.get(
-            "/orders/calendar",
+            "/calendar",
             {
                 date: formatDate(date),
                 view,
@@ -139,22 +139,24 @@ export default function Calendar({
             "bg-slate-50 text-slate-700 border-slate-200";
 
         return (
-            <a
-                key={order.id}
-                className={`block truncate rounded-md border px-2 py-1 text-xs font-medium transition-opacity hover:opacity-75 ${style}`}
-                title={`Pedido #${order.id} — ${order.status}`}
-            >
-                <span className="font-semibold">{order.items.map((item) => (
-                    <div>
-                        {item.quantity}x {item.name}
-                    </div>
-                ))}</span>
-                {order.customer?.full_name && (
-                    <span className="ml-1">
-                        {order.customer.full_name}
-                    </span>
-                )}
-            </a>
+            <Link href={`/orders/${order.id}`}>
+                <a
+                    key={order.id}
+                    className={`block truncate cursor-pointer rounded-md border px-2 py-1 text-xs font-medium transition-opacity hover:opacity-75 ${style}`}
+                    title={`Pedido #${order.id} — ${order.status}`}
+                >
+                    <span className="font-semibold">{order.items.map((item) => (
+                        <div>
+                            {item.quantity}x {item.name}
+                        </div>
+                    ))}</span>
+                    {order.customer?.full_name && (
+                        <span className="ml-1">
+                            {order.customer.full_name}
+                        </span>
+                    )}
+                </a>
+            </Link>
         );
     }
 
@@ -220,8 +222,8 @@ export default function Calendar({
                                 key={view}
                                 onClick={() => navigate(selected, view)}
                                 className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${calendarView === view
-                                        ? "bg-foreground text-white dark:text-black"
-                                        : "text-muted hover:bg-background"
+                                    ? "bg-foreground text-white dark:text-black"
+                                    : "text-muted hover:bg-background"
                                     }`}
                             >
                                 {label}
@@ -265,8 +267,8 @@ export default function Calendar({
                                 <div
                                     key={key}
                                     className={`min-w-0  ${isToday ? 'border-2 border-blue-300' : 'border-b border-r border-border'} ${calendarView === "month"
-                                            ? "min-h-24 p-1 sm:min-h-32 sm:p-2"
-                                            : "min-h-36 p-2 sm:p-3"
+                                        ? "min-h-24 p-1 sm:min-h-32 sm:p-2"
+                                        : "min-h-36 p-2 sm:p-3"
                                         } ${calendarView === "month" &&
                                             !isCurrentMonth
                                             ? "bg-surface"
@@ -276,11 +278,11 @@ export default function Calendar({
                                     <button
                                         onClick={() => navigate(day, "day")}
                                         className={`mb-2 flex size-7 items-center justify-center rounded-full text-xs font-medium ${isToday
-                                                ? "bg-foreground text-surface"
-                                                : isCurrentMonth ||
-                                                    calendarView !== "month"
-                                                    ? "text-foreground hover:bg-surface"
-                                                    : "text-surface"
+                                            ? "bg-foreground text-surface"
+                                            : isCurrentMonth ||
+                                                calendarView !== "month"
+                                                ? "text-foreground hover:bg-surface"
+                                                : "text-surface"
                                             }`}
                                         title="Ver pedidos de este día"
                                     >
@@ -324,12 +326,12 @@ export default function Calendar({
                         <div key={status} className="flex items-center gap-2">
                             <span
                                 className={`size-2.5 rounded-full ${status === "pending"
-                                        ? "bg-blue-500"
-                                        : status === "in_progress"
-                                            ? "bg-amber-500"
-                                            : status === "completed"
-                                                ? "bg-green-500"
-                                                : "bg-red-500"
+                                    ? "bg-blue-500"
+                                    : status === "in_progress"
+                                        ? "bg-amber-500"
+                                        : status === "completed"
+                                            ? "bg-green-500"
+                                            : "bg-red-500"
                                     }`}
                             />
                             <span className="text-xs">

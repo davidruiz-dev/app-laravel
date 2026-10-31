@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Expense;
 use App\Models\Order;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -18,9 +20,28 @@ class OrderController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::with('customer', 'items.category', 'payments')->latest()->paginate(10)->withQueryString();
+        $query = Order::with('customer', 'items.category', 'payments')
+            ->when($request->status, function ($query, $status) {
+                $query->where('status', 'like', "%{$status}%");
+            })
+            ->when($request->search, function ($query, $search) {
+                $query->whereHas('customer', function ($q) use ($search) {
+                    $q->where('full_name', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->date_from, function ($query, $date) {
+                $query->whereDate('created_at', '>=', $date);
+            })
+            ->when($request->date_to, function ($query, $date) {
+                $query->whereDate('created_at', '<=', $date);
+            });;
+
+        $orders = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         $ordersPending = Order::where('status', 'pending')->count();
         $ordersInProgress = Order::where('status', 'in_progress')->count();
@@ -34,7 +55,13 @@ class OrderController extends Controller
                 'total_in_progress' => $ordersInProgress,
                 'total_completed' => $ordersCompleted,
                 'total_cancelled' => $ordersCancelled,
-            ]
+            ],
+            'filters' => $request->only([
+                'status',
+                'search',
+                'date_from',
+                'date_to',
+            ])
         ]);
     }
 
@@ -61,8 +88,25 @@ class OrderController extends Controller
 
     public function MarkAsDelivered(Order $order)
     {
-        $order->update(['status' => 'delivered']);
-        return redirect()->back()->with('success', 'Pedido marcado como "Entregado".');
+        //$this->authorize('update', $order);
+        $paid = $order->payments()->sum('amount');
+
+        // Verificar si existe un saldo pendiente
+        if ($paid < $order->total) {
+            return back()->with(
+                'error',
+                'No se puede entregar el pedido porque tiene un saldo pendiente de pago.'
+            );
+        }
+
+        $order->update([
+            'status' => 'delivered',
+        ]);
+
+        return back()->with(
+            'success',
+            'Pedido marcado como "Entregado".'
+        );
     }
 
     public function calendar(Request $request)
@@ -106,23 +150,53 @@ class OrderController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $customers = Customer::query()->latest()->get();
-        $categories = Category::query()->latest()->get();
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'min:1', 'max:100'],
+        ]);
+
+        $search = trim($validated['search'] ?? '');
+
+        $customers = Customer::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('full_name')
+            ->limit(10)
+            ->get(['id', 'full_name', 'phone']);
+
+        $categories = Category::query()
+            ->latest()
+            ->get();
+
         return Inertia::render('Orders/Create', [
             'customers' => $customers,
             'categories' => $categories,
+            'filters' => [
+                'search' => $search,
+            ],
         ]);
     }
-
     /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_id' => ['required', 'exists:customers,id'],
+            'customer_id' => [
+                'required_without:customer',
+                'nullable',
+                'exists:customers,id',
+            ],
+
+            'customer' => ['nullable', 'array'],
+            'customer.full_name' => ['required_with:customer', 'string', 'max:255'],
+            'customer.phone' => ['required_with:customer', 'string', 'max:20'],
+
             'date' => ['required', 'date'],
             'shift' => ['required', 'string'],
             'delivery' => ['required'],
@@ -180,12 +254,31 @@ class OrderController extends Controller
                 $validated,
                 $uploadedImages
             ) {
+
+                // 1. Obtener o crear el cliente
+                if (!empty($validated['customer_id'])) {
+
+                    // Cliente existente
+                    $customerId = $validated['customer_id'];
+                } else {
+
+                    // Crear nuevo cliente
+                    $customer = Customer::create([
+                        'full_name' => $validated['customer']['full_name'],
+                        'phone' => $validated['customer']['phone'],
+                    ]);
+
+                    $customerId = $customer->id;
+                }
+
+                // 2. Calcular total del pedido
                 $total = collect($validated['items'])->sum(
                     fn($item) => (float) $item['subtotal']
                 );
 
+                // 3. Crear pedido
                 $order = Order::create([
-                    'customer_id' => $validated['customer_id'],
+                    'customer_id' => $customerId,
                     'total' => $total,
                     'status' => 'pending',
                     'date' => $validated['date'],
@@ -195,7 +288,9 @@ class OrderController extends Controller
                     $validated['delivery_address'] ?? null,
                 ]);
 
+                // 4. Registrar productos del pedido
                 foreach ($validated['items'] as $index => $item) {
+
                     $order->items()->create([
                         'category_id' => $item['category_id'],
                         'name' => $item['name'],
@@ -212,7 +307,9 @@ class OrderController extends Controller
                     ]);
                 }
 
+                // 5. Registrar pagos
                 foreach ($validated['payments'] ?? [] as $payment) {
+
                     $order->payments()->create([
                         'amount' => $payment['amount'],
                         'method' => $payment['method'],
@@ -251,7 +348,7 @@ class OrderController extends Controller
      * Display the specified resource.
      */
     public function show(Order $order)
-    {   
+    {
         $order->load('items.category')->load('customer')->load('payments');
         return Inertia::render('Orders/Show', [
             'order' => $order
@@ -280,5 +377,30 @@ class OrderController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    public function createPayment(Request $request)
+    {
+        $validated = $request->validate([
+            'amount'   => ['required', 'numeric', 'min:0.01'],
+            'type'     => ['required', 'string'],
+            'method'   => ['required', 'string'],
+            'paid_at'  => ['required', 'date'],
+            'note' => ['nullable', 'string'],
+            'order_id' => ['required', 'exists:orders,id'],
+        ]);
+
+        Payment::Create([
+            'amount' => $validated['amount'],
+            'type' => $validated['type'],
+            'method' => $validated['method'],
+            'paid_at' => $validated['paid_at'],
+            'note' => $validated['note'],
+            'order_id' => $validated['order_id'],
+        ]);
+
+        return redirect()
+            ->route('orders.show',  ['order' => $request->order_id])
+            ->with('success', 'Pago registrado correctamente');
     }
 }

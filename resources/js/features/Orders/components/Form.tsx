@@ -1,33 +1,25 @@
-import { useForm } from "@inertiajs/react";
-import { Payment } from "@/types";
+import { router, useForm, usePage } from "@inertiajs/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
-import Select from "@/components/Select";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
-import { PlusIcon, X } from "lucide-react";
+import { Bus, Phone, Plus, PlusIcon, Search, Store, User, X } from "lucide-react";
 import { Textarea } from "@/components/Textarea";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Category } from "@/features/Categories/types/category.types";
-import { OrderItem } from "@/features/Orders/types/order.types";
 import ItemImagePreview from "@/components/ImagePreview";
+import { Payment } from "../types/expense.types";
+import { OrderFormData, OrderItemFormData } from "../types/order.types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/Select";
+import { useEffect, useRef, useState } from "react";
 
-interface OrderItemForm {
-    category_id: string
-    name: string
-    description: string
-    quantity: number
-    subtotal: number;
-    customization: string
-    image: File | null
-}
-
-interface Props {
+interface OrderFormProps {
     customers: Customer[];
     categories: Category[];
+    search?: string;
 }
 
-export default function OrderForm({ customers, categories }: Props) {
-    const form = useForm({
+export default function OrderForm({ customers, categories, search = "" }: OrderFormProps) {
+    const form = useForm<OrderFormData>({
         customer_id: "",
         date: "",
         shift: "",
@@ -44,16 +36,16 @@ export default function OrderForm({ customers, categories }: Props) {
                 customization: "",
                 image: null
             },
-        ] as OrderItemForm[],
-
+        ],
         payments: [
             {
                 amount: 0,
-                method: "",
+                method: 'yape',
                 type: "advance",
                 paid_at: new Date().toISOString().slice(0, 16),
             }
-        ] as Payment[],
+        ],
+        customer: null,
     });
 
 
@@ -72,6 +64,22 @@ export default function OrderForm({ customers, categories }: Props) {
         ]);
     };
 
+    const addCustomer = () => {
+        form.setData({
+            ...form.data,
+            customer_id: "",
+            customer: {
+                full_name: "",
+                phone: "",
+            },
+        });
+    };
+
+    const removeCustomer = () => {
+        form.setData("customer", null);
+        form.setData("customer_id", '');
+    }
+
     const removeItem = (index: number) => {
         form.setData(
             "items",
@@ -79,11 +87,7 @@ export default function OrderForm({ customers, categories }: Props) {
         );
     };
 
-    const updateItem = (
-        index: number,
-        field: keyof OrderItem,
-        value: string | number
-    ) => {
+    const updateItem = (index: number, field: keyof OrderItemFormData, value: string | number) => {
         const items = [...form.data.items];
 
         items[index] = {
@@ -93,11 +97,7 @@ export default function OrderForm({ customers, categories }: Props) {
         form.setData("items", items);
     };
 
-    const updatePayment = (
-        index: number,
-        field: keyof Payment,
-        value: string | number
-    ) => {
+    const updatePayment = (index: number, field: keyof Payment, value: string | number) => {
         const payments = [...form.data.payments];
         payments[index] = {
             ...payments[index],
@@ -106,7 +106,15 @@ export default function OrderForm({ customers, categories }: Props) {
         form.setData("payments", payments);
     };
 
-
+    const updateCustomer = (
+        field: "full_name" | "phone",
+        value: string
+    ) => {
+        form.setData("customer", {
+            ...form.data.customer!,
+            [field]: value,
+        });
+    };
 
     const total = form.data.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
     const paid = form.data.payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
@@ -114,42 +122,146 @@ export default function OrderForm({ customers, categories }: Props) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
+        form.transform((data) => ({
+            ...data,
+            customer_id: data.customer ? null : data.customer_id,
+        }));
         form.post("/orders");
     };
 
+    const { filters = {} } = usePage<{ filters?: { search?: string } }>().props;
+    const [searchTerm, setSearchTerm] = useState(filters.search ?? '');
+    const firstRender = useRef(true);
+
+    useEffect(() => {
+        // Evitar enviar una petición al montar el componente.
+        if (firstRender.current) {
+            firstRender.current = false;
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            router.get(
+                '/orders/create',
+                {
+                    search: searchTerm || undefined,
+                },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                }
+            );
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [searchTerm]);
+
+
     return (
-        <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
+        <form onSubmit={submit} className="grid grid-cols-12 gap-6">
+            <div className="col-span-12 md:col-span-8 space-y-6">
                 <Card>
                     <CardHeader>
                         <CardTitle>Información del cliente</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Select
-                            label="Cliente"
-                            id="customer_id"
-                            value={form.data.customer_id}
-                            onChange={(e) =>
-                                form.setData("customer_id", e.target.value)
-                            }
-                        >
-                            <option value={''} disabled selected hidden>Seleccionar cliente</option>
+                        <div className="space-y-2">
+                            {!form.data.customer && (
+                                <div className="flex items-center gap-2">
 
-                            {customers.map((customer) => (
-                                <option
-                                    key={customer.id}
-                                    value={customer.id}
-                                >
-                                    {customer.full_name}
-                                </option>
-                            ))}
-                        </Select>
+                                    <div className="w-full">
+                                        <Select
+                                            value={form.data.customer_id}
+                                            onValueChange={(value) =>
+                                                form.setData("customer_id", value)
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Seleccionar cliente">
+                                                    {customers.find(
+                                                        (customer) => String(customer.id) === form.data.customer_id
+                                                    )?.full_name}
+                                                </SelectValue>
+                                            </SelectTrigger>
 
-                        {form.errors.customer_id && (
-                            <p className="mt-1 text-sm text-destructive">
-                                {form.errors.customer_id}
-                            </p>
-                        )}
+                                            <SelectContent>
+                                                <div className="p-1">
+                                                    <Input
+                                                        value={searchTerm}
+                                                        placeholder="Buscar cliente por nombre o teléfono"
+                                                        leftIcon={<Search size={17} />}
+                                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                                    />
+                                                </div>
+                                                {customers.map((customer) => (
+                                                    <SelectItem
+                                                        key={customer.id}
+                                                        value={String(customer.id)}
+                                                    >
+                                                        {customer.full_name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+
+                                    <Button type="button" onClick={addCustomer}>
+                                        <Plus size={17} /> <span className="hidden md:block">Agregar cliente</span>
+                                    </Button>
+                                </div>
+                            )}
+                            {form.data.customer && (
+                                <Card>
+                                    <div className="p-3 flex justify-between">
+                                        <h1 className="font-semibold">Registrar cliente</h1>
+                                        {form.data.customer && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCustomer()}
+                                                className="cursor-pointer"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <CardContent>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                            <Input
+                                                label="Nombre completo"
+                                                placeholder="Nombres y apellidos"
+                                                leftIcon={<User size={16} />}
+                                                value={form.data.customer.full_name ?? ''}
+                                                onChange={(e) => updateCustomer("full_name", e.target.value)}
+                                            />
+                                            {form.errors["customer.full_name"] && (
+                                                <p className="text-sm text-destructive">
+                                                    {form.errors["customer.full_name"]}
+                                                </p>
+                                            )}
+                                            <Input
+                                                label="Teléfono"
+                                                leftIcon={<Phone size={16} />}
+                                                value={form.data.customer.phone ?? ''}
+                                                onChange={(e) => updateCustomer("phone", e.target.value)}
+                                            />
+                                            {form.errors["customer.phone"] && (
+                                                <p className="text-sm text-destructive">
+                                                    {form.errors["customer.phone"]}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {form.errors.customer_id && (
+                                <p className="text-sm text-destructive">
+                                    {form.errors.customer_id}
+                                </p>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -163,10 +275,10 @@ export default function OrderForm({ customers, categories }: Props) {
                             return (
                                 <div
                                     key={index}
-                                    className="space-y-4 rounded-lg border border-border p-4"
+                                    className="space-y-4 rounded-lg border border-border p-4 mb-2"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <h3 className="font-medium">
+                                        <h3 className="font-medium mb-2">
                                             Producto #{index + 1}
                                         </h3>
 
@@ -176,7 +288,7 @@ export default function OrderForm({ customers, categories }: Props) {
                                                 onClick={() => removeItem(index)}
                                                 className="cursor-pointer"
                                             >
-                                                <X />
+                                                <X size={16} />
                                             </button>
                                         )}
                                     </div>
@@ -188,26 +300,33 @@ export default function OrderForm({ customers, categories }: Props) {
                                                 Categoría
                                             </label>
 
-                                            <Select
-                                                value={item.category_id}
-                                                onChange={(e) =>
-                                                    updateItem(
-                                                        index,
-                                                        "category_id",
-                                                        e.target.value
-                                                    )
-                                                }
-                                            >
-                                                <option value="">Seleccionar categoría</option>
-                                                {categories.map((category) => (
-                                                    <option
-                                                        key={category.id}
-                                                        value={category.id}
-                                                    >
-                                                        {category.name}
-                                                    </option>
-                                                ))}
-                                            </Select>
+                                            {categories.length > 0 && (
+                                                <Select
+                                                    value={item.category_id}
+                                                    onValueChange={(value) =>
+                                                        updateItem(index, "category_id", value)
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Seleccionar cliente">
+                                                            {categories.find(
+                                                                (c) => String(c.id) === item.category_id
+                                                            )?.name}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
+
+                                                    <SelectContent>
+                                                        {categories.map((c) => (
+                                                            <SelectItem
+                                                                key={c.id}
+                                                                value={String(c.id)}
+                                                            >
+                                                                {c.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
                                             {form.errors[`items.${index}.category_id`] && (
                                                 <p className="mt-1 text-sm text-destructive">
                                                     {form.errors[`items.${index}.category_id`]}
@@ -283,19 +402,24 @@ export default function OrderForm({ customers, categories }: Props) {
                                                 className="w-full rounded-lg border border-border bg-background px-3 py-2"
                                             />
                                         </div>
-                                        <ItemImagePreview
-                                            file={item.image}
-                                            onChange={(file) => {
-                                                form.setData(
-                                                    'items',
-                                                    form.data.items.map((current, i) =>
-                                                        i === index
-                                                            ? { ...current, image: file }
-                                                            : current,
-                                                    ),
-                                                );
-                                            }}
-                                        />
+                                        <div>
+                                            <label className="mb-2 block text-sm font-medium">
+                                                Imagen de referencia
+                                            </label>
+                                            <ItemImagePreview
+                                                file={item.image}
+                                                onChange={(file) => {
+                                                    form.setData(
+                                                        'items',
+                                                        form.data.items.map((current, i) =>
+                                                            i === index
+                                                                ? { ...current, image: file }
+                                                                : current,
+                                                        ),
+                                                    );
+                                                }}
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* CUSTOMIZATION */}
@@ -333,105 +457,124 @@ export default function OrderForm({ customers, categories }: Props) {
             </div>
 
 
-            <div className="space-y-6">
-                {/* =======DATOS DEL PEDIDO============ */}
+            <div className="col-span-12 md:col-span-4 space-y-6">
+                {/* =======Fecha y entrega ============ */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Datos del pedido</CardTitle>
+                        <CardTitle>Fecha y entrega</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <Input
-                                    label="Fecha de entrega"
-                                    id="date"
-                                    type="date"
-                                    value={form.data.date}
-                                    onChange={(e) =>
-                                        form.setData("date", e.target.value)
-                                    }
-                                />
-                                {form.errors.date && (
-                                    <p className="mt-1 text-sm text-destructive">
-                                        {form.errors.date}
-                                    </p>
-                                )}
-                            </div>
-                            <div>
-                                <Select
-                                    label="Horario"
-                                    id="shift"
-                                    value={form.data.shift}
-                                    onChange={(e) =>
-                                        form.setData("shift", e.target.value)
-                                    }
-                                >
-                                    <option value="" disabled selected hidden>Seleccionar horario</option>
-                                    <option value="mañana">Mañana</option>
-                                    <option value="tarde">Tarde</option>
-                                </Select>
+                        <div className="grid gap-4 grid-cols-1">
+                            <div className="space-y-3">
+                                <div>
+                                    <Input
+                                        label="Fecha de entrega"
+                                        id="date"
+                                        type="date"
+                                        value={form.data.date}
+                                        onChange={(e) =>
+                                            form.setData("date", e.target.value)
+                                        }
+                                    />
+                                    {form.errors.date && (
+                                        <p className="mt-1 text-sm text-destructive">
+                                            {form.errors.date}
+                                        </p>
+                                    )}
+                                </div>
 
-                                {form.errors.shift && (
-                                    <p className="mt-1 text-sm text-destructive">
-                                        {form.errors.shift}
-                                    </p>
+                                <div>
+                                    <label className="mb-2 block text-sm font-medium">
+                                        Horario
+                                    </label>
+                                    <Select
+                                        value={form.data.shift}
+                                        onValueChange={(value) => form.setData("shift", value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="selecciona un horario" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="mañana">
+                                                Mañana
+                                            </SelectItem>
+                                            <SelectItem value="tarde">
+                                                Tarde
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    {form.errors.shift && (
+                                        <p className="mt-1 text-sm text-destructive">
+                                            {form.errors.shift}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* DELIVERY */}
+                            <div className="">
+                                <label className="mb-2 block text-sm font-medium">Tipo de entrega</label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => form.setData("delivery", false)}
+                                        className={`p-3 border cursor-pointer rounded-md text-sm transition-colors flex flex-col items-center gap-2
+                                    ${form.data.delivery === false
+                                                ? "border-primary text-primary border-2 bg-primary/10"
+                                                : "border-border"
+                                            }`}
+                                    >
+                                        <Store />
+                                        Recojo en local
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => form.setData("delivery", true)}
+                                        className={`p-3 border cursor-pointer rounded-md text-sm transition-colors flex flex-col items-center gap-2
+                                    ${form.data.delivery === true
+                                                ? "border-primary text-primary border-2 bg-primary/10"
+                                                : "border-border"
+                                            }`}
+                                    >
+                                        <Bus />
+                                        Envio a domicilio
+                                    </button>
+                                </div>
+                                {form.data.delivery && (
+                                    <div className="mt-4">
+                                        <Input
+                                            label="Dirección de entrega"
+                                            id="delivery_address"
+                                            type="text"
+                                            placeholder="Calle, número, referencia"
+                                            value={form.data.delivery_address}
+                                            onChange={(e) =>
+                                                form.setData(
+                                                    "delivery_address",
+                                                    e.target.value
+                                                )
+                                            }
+                                        />
+                                        {form.errors.delivery_address && (
+                                            <p className="mt-1 text-sm text-destructive">
+                                                {form.errors.delivery_address}
+                                            </p>
+                                        )}
+                                    </div>
                                 )}
                             </div>
+
 
                         </div>
 
-                        {/* DELIVERY */}
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            <button
-                                type="button"
-                                onClick={() => form.setData("delivery", false)}
-                                className={`px-4 py-2 bg-background border border-border cursor-pointer rounded-full text-sm transition-colors ${form.data.delivery === false
-                                    ? "opacity-100"
-                                    : "opacity-40"
-                                    }`}
-                            >
-                                Recojo en local
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => form.setData("delivery", true)}
-                                className={`px-4 py-2 bg-white text-black border border-border cursor-pointer rounded-full text-sm transition-colors ${form.data.delivery === true
-                                    ? "opacity-100"
-                                    : "opacity-40"
-                                    }`}
-                            >
-                                Delivery a domicilio
-                            </button>
-                        </div>
 
-                        {form.data.delivery && (
-                            <div className="mt-4">
-                                <Input
-                                    label="Dirección de entrega"
-                                    id="delivery_address"
-                                    type="text"
-                                    placeholder="Calle, número, referencia"
-                                    value={form.data.delivery_address}
-                                    onChange={(e) =>
-                                        form.setData(
-                                            "delivery_address",
-                                            e.target.value
-                                        )
-                                    }
-                                />
-                                {form.errors.delivery_address && (
-                                    <p className="mt-1 text-sm text-destructive">
-                                        {form.errors.delivery_address}
-                                    </p>
-                                )}
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Anticipo</CardTitle>
+                        <CardTitle>Adelanto</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {form.data.payments.map((payment, index) => (
@@ -453,24 +596,6 @@ export default function OrderForm({ customers, categories }: Props) {
                                         )
                                     }
                                 />
-
-                                <Select
-                                    label="Método"
-                                    value={payment.method}
-                                    onChange={(e) =>
-                                        updatePayment(
-                                            index,
-                                            "method",
-                                            e.target.value
-                                        )
-                                    }
-                                >
-                                    <option value="">Seleccionar</option>
-                                    <option value="cash">Efectivo</option>
-                                    <option value="yape">Yape</option>
-                                    <option value="plin">Plin</option>
-                                    <option value="transfer">Transferencia</option>
-                                </Select>
 
                                 <Input
                                     label="Fecha"
@@ -511,9 +636,9 @@ export default function OrderForm({ customers, categories }: Props) {
                                 </span>
                             </div>
 
-                            <div className="flex justify-between border-t border-border pt-2">
+                            <div className="flex justify-between border-t border-border pt-2 font-semibold text-primary">
                                 <span>Saldo pendiente</span>
-                                <span className="font-semibold">
+                                <span>
                                     S/ {Math.max(balance, 0).toFixed(2)}
                                 </span>
                             </div>

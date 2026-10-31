@@ -34,7 +34,7 @@ export function Textarea({
           error ? `${textareaId}-error` : hint ? `${textareaId}-hint` : undefined
         }
         className={[
-          "min-h-32 w-full resize-y rounded-lg px-3 py-2 bg-surface border",
+          "w-full resize-y rounded-lg px-3 py-2 bg-surface border",
           "text-sm outline-none transition",
           "placeholder:text-gray-400",
           "focus:ring-2",
