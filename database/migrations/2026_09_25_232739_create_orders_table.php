@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('total', 10, 2)->default(0);
             $table->enum('status', [
                 'pending',
-                'confirmed',
+                'in_progress',
                 'cancelled',
                 'completed',
                 'delivered',

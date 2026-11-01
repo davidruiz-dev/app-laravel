@@ -47,7 +47,7 @@ export default function Index({ orders, overview }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Cliente</TableHead>
-              <TableHead>Fecha</TableHead>
+              <TableHead>Fecha entrega</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Acciones</TableHead>
@@ -56,7 +56,7 @@ export default function Index({ orders, overview }: Props) {
           <TableBody>
 
             {orders.data.map((order) => (
-              <TableRow>
+              <TableRow key={order.id}>
                 <TableCell>{order.customer?.full_name}</TableCell>
                 <TableCell>{formatDateTime(order.date)}</TableCell>
                 <TableCell>

@@ -13,6 +13,7 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Throwable;
 
 class OrderController extends Controller
@@ -67,7 +68,7 @@ class OrderController extends Controller
 
     public function Kanban()
     {
-        $orders = Order::with('customer', 'items.category', 'payments')->whereIn('status', ['pending', 'in_progress', 'completed'])->orderBy('date')->get();
+        $orders = Order::with('customer', 'items.category', 'payments')->whereIn('status', ['pending', 'in_progress', 'completed'])->orderBy('created_at')->get();
         return Inertia::render('Orders/OrdersKanban', [
             'orders' => $orders,
         ]);
@@ -103,10 +104,45 @@ class OrderController extends Controller
             'status' => 'delivered',
         ]);
 
-        return back()->with(
+        return redirect()->back()->with(
             'success',
             'Pedido marcado como "Entregado".'
         );
+    }
+
+    public function MarkAsCancelled(Order $order)
+    {
+        $order->update([
+            'status' => 'cancelled',
+        ]);
+
+        return back()->with(
+            'success',
+            'Pedido marcado como "Cancelado".'
+        );
+    }
+
+
+    public function UpdateStatus(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'status' => [
+                'required',
+                Rule::in([
+                    'pending',
+                    'in_progress',
+                    'completed',
+                    'delivered',
+                    'cancelled',
+                ]),
+            ],
+        ]);
+
+        $order->update([
+            'status' => $validated['status'],
+        ]);
+
+        return redirect()->route('orders.show', ['order' => $order->id])->with('success', 'Estado del pedido actualizado correctamente.');
     }
 
     public function calendar(Request $request)
@@ -351,24 +387,271 @@ class OrderController extends Controller
     {
         $order->load('items.category')->load('customer')->load('payments');
         return Inertia::render('Orders/Show', [
-            'order' => $order
+            'order' => $order,
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Request $request, Order $order)
     {
-        //
+        $order->load([
+            'customer',
+            'items.category',
+        ]);
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'min:1', 'max:100'],
+        ]);
+
+        $search = trim($validated['search'] ?? '');
+
+        $customers = Customer::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('full_name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('full_name')
+            ->limit(10)
+            ->get(['id', 'full_name', 'phone']);
+
+        $categories = Category::query()->latest()->get();
+
+        return Inertia::render('Orders/Update', [
+            'order' => $order,
+            'customers' => $customers,
+            'categories' => $categories,
+            'filters' => [
+                'search' => $search,
+            ],
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Order $order)
     {
-        //
+        $validated = $request->validate([
+            'customer_id' => [
+                'required_without:customer',
+                'nullable',
+                'exists:customers,id',
+            ],
+
+            'customer' => ['nullable', 'array'],
+            'customer.full_name' => ['required_with:customer', 'string', 'max:255'],
+            'customer.phone' => ['required_with:customer', 'string', 'max:20'],
+
+            'date' => ['required', 'date'],
+            'shift' => ['required', 'string'],
+            'delivery' => ['required'],
+            'delivery_address' => ['nullable', 'string'],
+
+            'items' => ['required', 'array', 'min:1'],
+
+            'items.*.id' => [
+                'nullable',
+                'integer',
+                Rule::exists('order_items', 'id')
+                    ->where('order_id', $order->id),
+            ],
+
+            'items.*.category_id' => ['required', 'exists:categories,id'],
+            'items.*.name' => ['required', 'string', 'max:255'],
+            'items.*.description' => ['nullable', 'string'],
+            'items.*.quantity' => ['required', 'numeric', 'min:1'],
+            'items.*.subtotal' => ['required', 'numeric', 'min:0'],
+            'items.*.customization' => ['nullable'],
+
+            'items.*.image' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+            ],
+
+            'items.*.remove_image' => ['nullable', 'boolean'],
+        ]);
+
+        $cloudinary = new Cloudinary();
+
+        $uploadedImages = [];
+        $imagesToDelete = [];
+
+        try {
+
+            // 1. Subir las nuevas imágenes a Cloudinary.
+            foreach ($validated['items'] as $index => $item) {
+
+                $file = $request->file("items.$index.image");
+
+                if (!$file) {
+                    continue;
+                }
+
+                $result = $cloudinary->uploadApi()->upload(
+                    $file->getRealPath(),
+                    [
+                        'folder' => 'my-app/order-items',
+                    ]
+                );
+
+                $uploadedImages[$index] = [
+                    'image_url' => $result['secure_url'],
+                    'image_public_id' => $result['public_id'],
+                ];
+            }
+
+            // 2. Actualizar el pedido dentro de una transacción.
+            DB::transaction(function () use (
+                $validated,
+                $order,
+                $uploadedImages,
+                &$imagesToDelete
+            ) {
+
+                // Cliente existente o nuevo.
+                if (!empty($validated['customer_id'])) {
+
+                    $customerId = $validated['customer_id'];
+                } else {
+
+                    $customer = Customer::create([
+                        'full_name' => $validated['customer']['full_name'],
+                        'phone' => $validated['customer']['phone'],
+                    ]);
+
+                    $customerId = $customer->id;
+                }
+
+                // Calcular el nuevo total.
+                $total = collect($validated['items'])->sum(
+                    fn($item) => (float) $item['subtotal']
+                );
+
+                // Actualizar información general.
+                $order->update([
+                    'customer_id' => $customerId,
+                    'total' => $total,
+                    'date' => $validated['date'],
+                    'shift' => $validated['shift'],
+                    'delivery' => $validated['delivery'],
+                    'delivery_address' => $validated['delivery_address'] ?? null,
+                ]);
+
+                // Obtener productos actuales del pedido.
+                $existingItems = $order->items()
+                    ->get()
+                    ->keyBy('id');
+
+                $keptItemIds = [];
+
+                // 3. Actualizar o crear productos.
+                foreach ($validated['items'] as $index => $item) {
+
+                    if (!empty($item['id'])) {
+
+                        $orderItem = $existingItems->get($item['id']);
+
+                        // Guardar imagen anterior para eliminarla si se reemplaza.
+                        $oldPublicId = $orderItem->image_public_id;
+                    } else {
+
+                        // Producto nuevo.
+                        $orderItem = $order->items()->make();
+                        $oldPublicId = null;
+                    }
+
+                    $orderItem->fill([
+                        'category_id' => $item['category_id'],
+                        'name' => $item['name'],
+                        'description' => $item['description'] ?? null,
+                        'quantity' => $item['quantity'],
+                        'subtotal' => $item['subtotal'],
+                        'customization' => $item['customization'] ?? null,
+                    ]);
+
+                    // Reemplazar imagen.
+                    if (isset($uploadedImages[$index])) {
+
+                        if ($oldPublicId) {
+                            $imagesToDelete[] = $oldPublicId;
+                        }
+
+                        $orderItem->image_url =
+                            $uploadedImages[$index]['image_url'];
+
+                        $orderItem->image_public_id =
+                            $uploadedImages[$index]['image_public_id'];
+                    } elseif (!empty($item['remove_image'])) {
+
+                        // El usuario decidió quitar la imagen.
+                        if ($oldPublicId) {
+                            $imagesToDelete[] = $oldPublicId;
+                        }
+
+                        $orderItem->image_url = null;
+                        $orderItem->image_public_id = null;
+                    }
+
+                    $orderItem->save();
+
+                    $keptItemIds[] = $orderItem->id;
+                }
+
+                // 4. Eliminar productos que fueron quitados del formulario.
+                $removedItems = $order->items()
+                    ->whereNotIn('id', $keptItemIds)
+                    ->get();
+
+                foreach ($removedItems as $removedItem) {
+
+                    if ($removedItem->image_public_id) {
+                        $imagesToDelete[] = $removedItem->image_public_id;
+                    }
+
+                    $removedItem->delete();
+                }
+            });
+        } catch (Throwable $e) {
+
+            // Si falla la operación, eliminar las nuevas imágenes subidas.
+            foreach ($uploadedImages as $image) {
+
+                try {
+                    $cloudinary->uploadApi()->destroy(
+                        $image['image_public_id']
+                    );
+                } catch (Throwable $cleanupError) {
+
+                    Log::error('No se pudo eliminar una imagen nueva de Cloudinary.', [
+                        'public_id' => $image['image_public_id'],
+                    ]);
+                }
+            }
+
+            throw $e;
+        }
+
+        // 5. Eliminar imágenes antiguas después de confirmar la transacción.
+        foreach (array_unique($imagesToDelete) as $publicId) {
+
+            try {
+                $cloudinary->uploadApi()->destroy($publicId);
+            } catch (Throwable $e) {
+
+                Log::error('No se pudo eliminar una imagen antigua de Cloudinary.', [
+                    'public_id' => $publicId,
+                ]);
+            }
+        }
+
+        return redirect()
+            ->route('orders.show', $order->id)
+            ->with('success', 'Pedido actualizado correctamente.');
     }
 
     /**

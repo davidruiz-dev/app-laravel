@@ -9,6 +9,8 @@ import Modal from "@/components/Modal";
 import CustomerForm from "@/features/customers/components/Form";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Paginated } from "@/types";
+import { formatPhone } from "@/utils/phone.util";
+import Input from "@/components/Input";
 
 interface Props {
   customers: Paginated<Customer>;
@@ -78,24 +80,16 @@ export default function Index({ customers, filters }: Props) {
         </Button>
       </div>
 
-
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <div className="relative w-full max-w-sm">
-            <Search
-              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="Buscar cliente..."
-              className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-neutral-700 dark:bg-neutral-900"
-            />
-          </div>
-
-
-
+          <Input
+            leftIcon={<Search size={17} />}
+            type="search"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Buscar cliente..."
+            className="w-full md:w-6/12"
+          />
         </div>
 
         <Table>
@@ -104,7 +98,6 @@ export default function Index({ customers, filters }: Props) {
               <TableHead>Nombre</TableHead>
               <TableHead>Teléfono</TableHead>
               <TableHead>Total pedidos</TableHead>
-              <TableHead>Último pedido</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -117,9 +110,8 @@ export default function Index({ customers, filters }: Props) {
               customers.data.map((customer) => (
                 <TableRow key={customer.id}>
                   <TableCell>{customer.full_name}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
+                  <TableCell>{formatPhone(customer.phone)}</TableCell>
                   <TableCell>{customer.orders_count}</TableCell>
-                  <TableCell>{customer.last_order}</TableCell>
                   <TableCell className="flex gap-3 items-center">
                     <Link href={`/customers/${customer.id}`}>
                       <button

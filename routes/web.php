@@ -39,13 +39,13 @@ Route::middleware('auth')->group(function () {
     // Orders routes
     Route::patch('/orders/{order}/in_progress', [OrderController::class, 'MarkAsInProgress'])->name('orders.MarkAsInProgress');
     Route::patch('/orders/{order}/complete', [OrderController::class, 'MarkAsCompleted'])->name('orders.MarkAsCompleted');
-    // Route::patch('/orders/{order}/cancel', [OrderController::class, 'MarkAsCancelled'])->name('orders.MarkAsCancelled');
+    Route::patch('/orders/{order}/cancelled', [OrderController::class, 'MarkAsCancelled'])->name('orders.MarkAsCancelled');
     Route::patch('/orders/{order}/delivered', [OrderController::class, 'MarkAsDelivered'])->name('orders.MarkAsDelivered');
 
 
     Route::resource('orders', OrderController::class);
     Route::post('/orders/payments', [OrderController::class, 'createPayment'])->name('orders.createPayment');
-
+    Route::patch('/orders/{order}/status', [OrderController::class, 'UpdateStatus'])->name('orders.UpdateStatus');
     // Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('expenses', ExpenseController::class);

@@ -20,6 +20,8 @@ export interface Order {
     status: OrderStatus
     date: string;
     shift: string;
+    delivery: boolean;
+    delivery_address: string;
     items: OrderItem[];
     payments: Payment[];
 }

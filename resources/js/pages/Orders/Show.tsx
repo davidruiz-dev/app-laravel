@@ -345,7 +345,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                                         Este pedido no tiene productos.
                                     </p>
                                 ) : (
-                                    <ul className="divide-y divide-gray-100">
+                                    <ul className="divide-y divide-border">
                                         {items.map((item) => (
                                             <OrderItemRow
                                                 key={item.id}
@@ -499,7 +499,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                                         Aún no hay pagos registrados.
                                     </p>
                                 ) : (
-                                    <ul className="divide-y divide-gray-100">
+                                    <ul className="divide-y divide-border">
                                         {payments.map((payment) => (
                                             <li
                                                 key={payment.id}
@@ -538,6 +538,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                     total={Number(order.total)}
                     paid={paid}
                     orderId={order.id}
+                    onClose={() => setShowPaymentModal(false)}
                 />
             </Modal>
 
@@ -557,7 +558,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                     </p>
                     <div className="mt-4 flex justify-end gap-2">
                         <Button
-                            variant="ghost"
+                            variant="danger"
                             disabled={processing}
                             onClick={() => setShowStatusModal(false)}
                         >

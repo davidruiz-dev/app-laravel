@@ -58,7 +58,7 @@ export default function Index({ expenses, totalExpenses, }: Props) {
                     </Button>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                {/* <div className="grid gap-4 sm:grid-cols-2">
                     <Card>
                         <CardContent>
                             <div className="flex items-center gap-1 text-muted">
@@ -76,7 +76,7 @@ export default function Index({ expenses, totalExpenses, }: Props) {
                             <div className="flex items-center gap-1 text-muted">
                                 <CreditCardMinus size={14}/>
                                 <p className="text-sm">
-                                    Total transactions
+                                    Total
                                 </p>
                             </div>
                             <p className="mt-2 text-2xl font-bold">
@@ -84,7 +84,7 @@ export default function Index({ expenses, totalExpenses, }: Props) {
                             </p>
                         </CardContent>
                     </Card>
-                </div>
+                </div> */}
 
                 <div className="w-full">
                     <ExpenseFilters />

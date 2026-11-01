@@ -40,7 +40,7 @@ export default function Dashboard({ stats, revenueChart, chartDays, topCategorie
       {
         preserveState: true,
         preserveScroll: true,
-        only: ["revenueChart", "chartDays", "topCategories", "topCustomers",],
+        only: ["stats", "revenueChart", "chartDays", "topCategories", "topCustomers",],
       },
     );
   }
@@ -99,7 +99,7 @@ export default function Dashboard({ stats, revenueChart, chartDays, topCategorie
           />
 
           <StatCard
-            label="Pedidos completados"
+            label="Pedidos entregados"
             value={stats.completed_orders}
             description="Terminados este mes"
             icon={CheckCircle2}

@@ -1,6 +1,7 @@
 import { useForm } from "@inertiajs/react";
 import { Customer } from "../types/customer.types";
 import Button from "@/components/Button";
+import Input from "@/components/Input";
 
 interface Props {
   customer: Customer | null;
@@ -19,25 +20,24 @@ export default function CustomerForm({ customer, mode, onClose }: Props) {
     e.preventDefault();
 
     if (mode === 'create') {
-      form.post('/customers');
+      form.post('/customers', {
+        onSuccess: () => onClose()
+      });
     } else {
-      form.put(`/customers/${customer?.id}`);
+      form.put(`/customers/${customer?.id}`, {
+        onSuccess: () => onClose()
+      });
     }
   };
 
   return (
     <form onSubmit={submit} className="space-y-6">
       <div>
-        <label
-          htmlFor="name"
-          className="mb-2 block text-sm font-medium"
-        >
-          Nombre completo
-        </label>
-
-        <input
+        <Input
           id="name"
           type="text"
+          label="Nombre completo"
+          placeholder="Nombres y apellidos"
           value={form.data.full_name}
           onChange={(e) =>
             form.setData('full_name', e.target.value)
@@ -53,16 +53,11 @@ export default function CustomerForm({ customer, mode, onClose }: Props) {
       </div>
 
       <div>
-        <label
-          htmlFor="phone"
-          className="mb-2 block text-sm font-medium"
-        >
-          Teléfono
-        </label>
-
-        <input
+        <Input
           id="phone"
           type="tel"
+          label="Teléfono"
+          placeholder="Número de teléfono"
           value={form.data.phone}
           onChange={(e) =>
             form.setData('phone', e.target.value)
@@ -79,21 +74,14 @@ export default function CustomerForm({ customer, mode, onClose }: Props) {
 
       {/* Correo electrónico */}
       <div>
-        <label
-          htmlFor="email"
-          className="mb-2 block text-sm font-medium"
-        >
-          Correo electrónico <span className="text-xs text-muted">*opcional</span>
-        </label>
-
-        <input
+        <Input
           id="email"
           type="email"
+          label="Correo electrónico *opcional"
           value={form.data.email}
           onChange={(e) =>
             form.setData('email', e.target.value)
           }
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
         />
 
         {form.errors.email && (
@@ -104,17 +92,18 @@ export default function CustomerForm({ customer, mode, onClose }: Props) {
       </div>
 
       <div className="flex justify-end gap-3">
-        <button
+        <Button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-border px-4 py-2"
+          variant="danger"
         >
           Cancelar
-        </button>
+        </Button>
 
         <Button
           type="submit"
           disabled={form.processing}
+          variant="secondary"
         >
           {form.processing
             ? 'Guardando...'

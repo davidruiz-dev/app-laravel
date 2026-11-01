@@ -233,7 +233,7 @@ export default function Calendar({
                 </div>
 
                 {/* Calendario */}
-                <div className="overflow-x-auto min-w-250 rounded-xl border border-border bg-background">
+                <div className="overflow-x-auto min-w-250 rounded border border-border bg-background">
                     {calendarView !== "day" && (
                         <div className="grid grid-cols-7 border-b border-border">
                             {WEEKDAYS.map((day) => (

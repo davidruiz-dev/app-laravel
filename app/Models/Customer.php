@@ -10,6 +10,8 @@ class Customer extends Model
     protected $fillable = [
         'full_name',
         'phone',
+        'email',
+        'social_network'
     ];
 
     public function orders(): HasMany

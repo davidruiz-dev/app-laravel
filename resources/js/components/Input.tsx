@@ -62,7 +62,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   : undefined
             }
             className={[
-              "block w-full rounded-lg border bg-surface px-3 py-2.5",
+              "block w-full rounded-lg border bg-background/40 px-3 h-10",
               "text-sm text-foreground",
               "placeholder:text-muted-foreground",
               "outline-none transition-colors",

@@ -11,7 +11,8 @@ interface OrderCardProps {
 }
 export function OrderCard({ order }: OrderCardProps) {
 
-    const advancePayment = order.payments.find((p) => p.type === 'advance');
+    const totalPayments = order.payments.reduce(
+        (total, payment) => total + Number(payment.amount), 0);
 
     const markAsInProgress = () => router.patch(`/orders/${order.id}/in_progress`,);
     const markAsCompleted = () => router.patch(`/orders/${order.id}/complete`,);
@@ -82,9 +83,16 @@ export function OrderCard({ order }: OrderCardProps) {
                     <div className="flex gap-3 mt-3">
                         <span className="text-sm">S/{order.total}</span>
 
-                        <span className="text-xs px-2 py-1 rounded-3xl bg-surface border border-border">
-                            S/{(order.total - (advancePayment?.amount ?? 0)).toFixed(2)} pendiente
-                        </span>
+                        {totalPayments < order.total ? (
+                            <span className="text-xs px-2 py-1 rounded-3xl bg-surface border border-border">
+                                S/{(order.total - (totalPayments ?? 0)).toFixed(2)} pendiente
+                            </span>
+                        ) : (
+                            <span className="text-xs px-2 py-1 rounded-3xl bg-green-100 text-green-700">
+                                Pago completado
+                            </span>
+                        )}
+
                     </div>
 
                     <div className="flex justify-end gap-2">
@@ -125,12 +133,12 @@ export function OrderCard({ order }: OrderCardProps) {
                             <span>Total</span> <span>S/{(order.total)}</span>
                         </div>
                         <div className="flex justify-between p-3">
-                            <span>Pago inicial</span> <span>S/{(advancePayment?.amount)}</span>
+                            <span>Pagado</span> <span>S/{(totalPayments ?? 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between p-3">
                             <span className="font-semibold">Pendiente</span>
                             <span >
-                                S/{(order.total - (advancePayment?.amount ?? 0)).toFixed(2)}
+                                S/{(order.total - (totalPayments ?? 0)).toFixed(2)}
                             </span>
                         </div>
                     </div>
@@ -164,7 +172,7 @@ export function OrderCard({ order }: OrderCardProps) {
                 <div>
                     <p className="">¿Deseas actualizar el estado de este pedido?</p>
                 </div>
-                
+
                 <div className="flex gap-2 justify-end border-border mt-4">
                     <Button variant="ghost" onClick={() => setShowModalUpdateState(false)}>Cancelar</Button>
                     <Button variant="secondary" onClick={() => changeStatus(order)}>Confirmar</Button>

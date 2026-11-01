@@ -62,12 +62,13 @@ class CustomerController extends Controller
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'max:9'],
+            'email' => ['nullable'],
             'social_network' => ['nullable']
         ]);
 
         Customer::create($validated);
 
-        return to_route('customers.index')
+        return redirect('customers.index')
             ->with('success', 'Cliente creado correctamente.');
     }
 
@@ -106,7 +107,9 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'max:9']
+            'phone' => ['required', 'max:9'],
+            'email' => ['nullable'],
+            'social_network' => ['nullable']
         ]);
 
         $customer->update($validated);

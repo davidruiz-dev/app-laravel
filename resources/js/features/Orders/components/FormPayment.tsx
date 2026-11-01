@@ -13,9 +13,10 @@ interface FormPaymentProps {
     total: number;
     paid: number;
     orderId: number;
+    onClose: () => void
 }
 
-export default function FormPayment({ total, paid, orderId }: FormPaymentProps) {
+export default function FormPayment({ total, paid, orderId, onClose }: FormPaymentProps) {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('yape');
 
     const form = useForm<PaymentFormData>({
@@ -30,8 +31,18 @@ export default function FormPayment({ total, paid, orderId }: FormPaymentProps) 
     const submit = (e: FormEvent) => {
         e.preventDefault();
 
-        form.post('/orders/payments');
-    }
+        form.post('/orders/payments', {
+            preserveScroll: true,
+
+            onSuccess: () => {
+                onClose();
+            },
+            
+            onError: (errors) => {
+                console.log('Errores:', errors);
+            },
+        });
+    };
 
     const pending = total - paid;
 
@@ -58,8 +69,6 @@ export default function FormPayment({ total, paid, orderId }: FormPaymentProps) 
                     <span className="font-semibold text-muted">S/</span>
                 }
                 max={pending}
-                min={0}
-                type="number"
                 onChange={(e) => {
                     form.setData('amount', Number(e.target.value))
                 }}
@@ -75,7 +84,10 @@ export default function FormPayment({ total, paid, orderId }: FormPaymentProps) 
                 <label className="text-sm">Medio de pago</label>
                 <Select
                     value={paymentMethod}
-                    onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                    onValueChange={(value) => {
+                        setPaymentMethod(value as PaymentMethod)
+                        form.setData('method', paymentMethod)
+                    }}
                 >
                     <SelectTrigger>
                         <SelectValue placeholder="Medio de pago" />
@@ -130,7 +142,7 @@ export default function FormPayment({ total, paid, orderId }: FormPaymentProps) 
             />
 
             <div className="flex items-center gap-2 justify-end">
-                <Button variant="ghost" type="button">
+                <Button variant="danger" type="button" onClick={onClose}>
                     Cancelar
                 </Button>
                 <Button type="submit" variant="secondary" disabled={form.processing}>

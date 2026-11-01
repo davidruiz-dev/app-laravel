@@ -19,10 +19,7 @@ interface Props {
 export default function Index({ categories, filters }: Props) {
     const [showModal, setShowModal] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-
     const [search, setSearch] = useState(filters.search ?? '');
-
-
 
     const handleSearch = (value: string) => {
         setSearch(value);

@@ -58,7 +58,11 @@ export default function CategoryIncomeChart({ data }: Props) {
 
     return (
         <div className="w-full h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
+            {data.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                    No hay categorías con compras en este periodo.
+                </div>
+            ): (<ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie
                         data={data}
@@ -86,7 +90,8 @@ export default function CategoryIncomeChart({ data }: Props) {
 
                     <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
-            </ResponsiveContainer>
+            </ResponsiveContainer>)}
+            
         </div>
     );
 }

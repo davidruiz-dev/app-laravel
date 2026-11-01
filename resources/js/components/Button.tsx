@@ -15,14 +15,14 @@ export default function Button({
     const variants = {
         primary: 'bg-primary text-white hover:bg-primary/80',
         secondary: 'bg-secondary text-white border border-border',
-        danger: 'bg-destructive text-white hover:bg-danger-dark',
+        danger: 'bg-destructive text-white border border-destructive',
         ghost: 'bg-transparent text-foreground border border-border',
     };
 
     const sizes = {
-        sm: 'px-3 py-1.5 text-xs',
-        md: 'px-4 py-2 text-sm',
-        lg: 'px-5 py-2.5 text-base',
+        sm: 'px-3 h-8 text-xs',
+        md: 'px-4 h-10 text-sm',
+        lg: 'px-5 h-12 text-base',
     };
 
     return (

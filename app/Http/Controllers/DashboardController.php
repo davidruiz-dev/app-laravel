@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $days = (int) ($validated['days'] ?? 30);
 
         return Inertia::render('Dashboard/Index', [
-            'stats' => $statsService->getStats(),
+            'stats' => $statsService->getStats($days),
             'revenueChart' => $chartService->getDailyRevenue($days),
             'chartDays' => $days,
             'topCategories' => $categoriesService->getTopCategories($days),

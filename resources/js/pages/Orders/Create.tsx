@@ -1,7 +1,7 @@
 import Layout from "@/layouts/Layout";
-import FormOrder from "../../features/Orders/components/Form";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Category } from "@/features/Categories/types/category.types";
+import OrderForm from "../../features/Orders/components/OrderForm";
 
 interface Props {
   customers: Customer[];
@@ -19,7 +19,7 @@ export default function Create({ customers, categories, filters }: Props) {
           <h1 className="text-3xl font-semibold">Nuevo pedido</h1>
           <p className="text-muted">Completa los datos requeridos para crear un nuevo pedido.</p>
         </div>
-        <FormOrder customers={customers} categories={categories} search={filters.search ?? ''} />
+        <OrderForm customers={customers} categories={categories} search={filters.search ?? ''} />
       </div>
     </Layout>
   )

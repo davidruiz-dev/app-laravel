@@ -57,6 +57,10 @@ export default function ReportsFilter() {
 
     const hasFilters = dateRange !== null;
 
+    useEffect(() => {
+        console.log(dateRange);
+    }, []);
+
     return (
         <div className="flex items-center gap-2">
             <DropdownMenu>

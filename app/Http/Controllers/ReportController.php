@@ -99,7 +99,7 @@ class ReportController extends Controller
                 categories.name as category,
                 SUM(order_items.subtotal) as total
             ')
-            ->whereYear('orders.created_at', $now->year)
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->where('orders.status', '!=', 'cancelled')
             ->groupBy('categories.id', 'categories.name')
             ->orderByDesc('total')
