@@ -2,6 +2,7 @@ import Button from "@/components/Button";
 import { Card, CardContent, CardHeader } from "@/components/Card";
 import Modal from "@/components/Modal";
 import FormPayment from "@/features/Orders/components/FormPayment";
+import { OrderStatusBadge } from "@/features/Orders/components/OrderStatusBadge";
 import { Order, OrderItem, OrderStatus } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
 import { formatCurrency } from "@/utils/currency.util";
@@ -10,28 +11,6 @@ import { Link, router } from "@inertiajs/react";
 import { Calendar, CheckCircle, Clock, Eye, Pencil, Wallet } from "lucide-react";
 import { useState } from "react";
 
-const STATUS_CONFIG: Record<OrderStatus, { label: string; className: string }> = {
-    [OrderStatus.PENDING]: {
-        label: 'Pendiente',
-        className: 'bg-amber-100 text-amber-800 ring-amber-600/20',
-    },
-    [OrderStatus.IN_PROGRESS]: {
-        label: 'En preparación',
-        className: 'bg-blue-100 text-blue-800 ring-blue-600/20',
-    },
-    [OrderStatus.COMPLETED]: {
-        label: 'Completado',
-        className: 'bg-emerald-100 text-emerald-800 ring-emerald-600/20',
-    },
-    [OrderStatus.DELIVERED]: {
-        label: 'Entregado',
-        className: 'bg-gray-100 text-gray-700 ring-gray-500/20',
-    },
-    [OrderStatus.CANCELLED]: {
-        label: 'Cancelado',
-        className: 'bg-red-100 text-red-800 ring-red-600/20',
-    },
-};
 
 const STATUS_ACTIONS: Partial<Record<OrderStatus, string>> = {
     [OrderStatus.PENDING]: 'Iniciar producción',
@@ -39,27 +18,10 @@ const STATUS_ACTIONS: Partial<Record<OrderStatus, string>> = {
     [OrderStatus.COMPLETED]: 'Entregar pedido',
 };
 
-
-
 const formatMoney = (value: number) => formatCurrency(value);
 
 // Trabajar con céntimos para evitar errores de precisión.
-const toCents = (value: number | string) =>
-    Math.round(Number(value) * 100);
-
-function StatusBadge({ status }: { status: OrderStatus }) {
-    const config = STATUS_CONFIG[status];
-
-    if (!config) return null;
-
-    return (
-        <span
-            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${config.className}`}
-        >
-            {config.label}
-        </span>
-    );
-}
+const toCents = (value: number | string) => Math.round(Number(value) * 100);
 
 function InfoRow({
     label,
@@ -261,7 +223,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                                 Pedido #{order.id}
                             </h1>
 
-                            <StatusBadge status={order.status} />
+                            <OrderStatusBadge status={order.status} />
                         </div>
 
                         <div className="flex flex-wrap items-center gap-7 text-sm text-muted">

@@ -1,11 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import TablePagination from "@/components/TablePagination";
 import { Customer } from "@/features/customers/types/customer.types";
+import { OrderStatusBadge } from "@/features/Orders/components/OrderStatusBadge";
 import { Order, OrderStatus } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
 import { Paginated } from "@/types";
 import { formatDate, formatDateTime, getRemainingDays } from "@/utils/date";
-import { orderStatusTypeLabels } from "@/utils/order.util";
 import { Link } from "@inertiajs/react";
 import { Calendar1Icon, Clock, Mail, MessageCircle, PackageOpen, Phone, } from "lucide-react";
 
@@ -17,13 +17,6 @@ interface CustomerShowProps {
 const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
 const MAX_VISIBLE_ITEMS = 3;
 
-const STATUS_STYLES: Record<OrderStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  delivered: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-800',
-};
 
 const money = new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' });
 const orderUrl = (id: number) => `/orders/${id}`;
@@ -79,9 +72,8 @@ function OrderCard({ order }: { order: Order }) {
             </span>
           </div>
         </div>
-        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLES[order.status]}`}>
-          {orderStatusTypeLabels[order.status]}
-        </span>
+        
+        <OrderStatusBadge status={order.status} />
       </div>
 
       <ul className="mt-3 space-y-1 text-sm text-muted">

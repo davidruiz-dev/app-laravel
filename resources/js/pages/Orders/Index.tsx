@@ -13,6 +13,7 @@ import OrdersFilter from '@/features/Orders/components/OrdersFilter'
 import TablePagination from '@/components/TablePagination'
 import { useEffect, useRef, useState } from 'react'
 import { DateRange } from '@/components/DateRange'
+import { OrderStatusBadge } from '@/features/Orders/components/OrderStatusBadge'
 
 interface Props {
   orders: Paginated<Order>;
@@ -25,6 +26,7 @@ interface Props {
     date_to?: string;
   };
 }
+
 
 export default function Index({ orders, overview, filters }: Props) {
   const [search, setSearch] = useState(filters.search ?? '');
@@ -140,9 +142,9 @@ export default function Index({ orders, overview, filters }: Props) {
                   <TableCell>{order.customer?.full_name}</TableCell>
                   <TableCell>{formatDateTime(order.date)}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {[orderStatusTypeLabels[order.status]]}
-                    </span>
+                  
+
+                    <OrderStatusBadge status={order.status} />
                   </TableCell>
                   <TableCell>S/{order.total}</TableCell>
                   <TableCell>
