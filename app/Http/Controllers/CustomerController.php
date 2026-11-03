@@ -35,14 +35,12 @@ class CustomerController extends Controller
                 });
             })
             ->latest()
-            ->paginate(15)
+            ->paginate($request->input('per_page', 10))
             ->withQueryString();
 
         return Inertia::render('Customers/Index', [
             'customers' => $customers,
-            'filters' => [
-                'search' => $search->value(),
-            ],
+            'filters' => $request->only(['search', 'per_page']),
         ]);
     }
 
@@ -68,7 +66,7 @@ class CustomerController extends Controller
 
         Customer::create($validated);
 
-        return redirect('customers.index')
+        return redirect()->route('customers.index')
             ->with('success', 'Cliente creado correctamente.');
     }
 

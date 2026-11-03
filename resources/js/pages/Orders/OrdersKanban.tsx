@@ -1,7 +1,7 @@
 import Button from "@/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import Layout from "@/layouts/Layout";
-import { Link } from "@inertiajs/react";
+import { Head, Link } from "@inertiajs/react";
 import { PlusIcon } from "lucide-react";
 import { Order } from "@/features/Orders/types/order.types";
 import { OrderCard } from "@/features/Orders/components/OrderCard";
@@ -38,7 +38,8 @@ export default function OrdersKanban({ orders }: OrdersKanbanProps) {
     }, {});
 
     return (
-        <Layout title="Kanban">
+        <Layout title="Tablero de pedidos">
+            <Head title="Tablero de pedidos" />
             <div className="flex justify-between flex-wrap gap-2 items-end mb-4">
                 <div>
                     <h1 className='text-3xl font-bold'>Tablero de pedidos</h1>

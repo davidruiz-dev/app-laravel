@@ -3,11 +3,13 @@ import Modal from "@/components/Modal";
 import Layout from "@/layouts/Layout"
 import { formatDateTime } from '@/utils/date'
 import { router, useForm } from "@inertiajs/react";
-import { PlusCircleIcon, PlusIcon, Search, } from 'lucide-react';
+import { Pencil, PlusCircleIcon, PlusIcon, Search, Trash, } from 'lucide-react';
 import { useEffect, useState } from "react";
 import { Category } from "@/features/Categories/types/category.types";
 import { Paginated } from "@/types";
-import TablePagination, { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/Table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/Table";
+import TablePagination from "@/components/TablePagination";
+import Input from "@/components/Input";
 
 interface Props {
     categories: Paginated<Category>;
@@ -21,19 +23,35 @@ export default function Index({ categories, filters }: Props) {
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
 
-    const handleSearch = (value: string) => {
-        setSearch(value);
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            const current = filters.search ?? '';
+            if (search === current) return;
 
-        router.get('/categories',
-            {
-                search: value,
-            },
-            {
-                preserveState: true,
-                replace: true,
-            }
-        );
-    };
+            router.get(
+                '/categories',
+                { ...filters, search, page: 1 },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                }
+            );
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [search]);
+
+    const handlePerPage = (perPage: number) => {
+    router.get(
+      '/categories',
+      { ...filters, per_page: perPage, page: 1 },
+      {
+        preserveState: true,
+        preserveScroll: true,
+      }
+    );
+  };
 
     const handleCreate = () => {
         setSelectedCategory(null);
@@ -59,7 +77,7 @@ export default function Index({ categories, filters }: Props) {
                     <p className="text-muted text-sm md:text-base">Lista de todos tus categorías registradas en el sistema.</p>
                 </div>
                 <Button onClick={handleCreate} size="md">
-                    <PlusIcon />
+                    <PlusIcon size={17} />
                     <span className="hidden md:block">Nueva categoría</span>
                 </Button>
             </div>
@@ -67,20 +85,14 @@ export default function Index({ categories, filters }: Props) {
             <div className="space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                     <div className="relative w-full max-w-sm">
-                        <Search
-                            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                        />
-
-                        <input
+                        <Input
+                            leftIcon={<Search size={17} />}
                             type="search"
                             value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) => setSearch(e.target.value)}
                             placeholder="Buscar categoría..."
-                            className="w-full rounded-lg border border-slate-300 dark:text-gray-50 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-neutral-700 dark:bg-neutral-900"
                         />
                     </div>
-
-
                 </div>
 
                 <Modal
@@ -97,102 +109,75 @@ export default function Index({ categories, filters }: Props) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>
-                                Nombre
-                            </TableHead>
-
-                            <TableHead >
-                                Fecha de creación
-                            </TableHead>
-
-                            <TableHead>
-                                Acciones
-                            </TableHead>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead>Fecha de creación</TableHead>
+                            <TableHead>Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
-
                     <TableBody>
-                        {categories.data.map((category) => (
-                            <TableRow
-                                key={category.id}
-
-                            >
-                                {/* Nombre */}
-                                <TableCell>
-                                    <div>
-                                        {/* <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-sm font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                                                    {category.name.charAt(0).toUpperCase()}
-                                                </div> */}
-
-                                        <p className="font-medium first-letter:uppercase">
-                                            {category.name}
-                                        </p>
-                                    </div>
-                                </TableCell>
-
-                                {/* Fecha */}
-                                <TableCell>
-                                    <span className="">
-                                        {formatDateTime(category.created_at)}
-                                    </span>
-                                </TableCell>
-
-                                {/* Acciones */}
-                                <TableCell>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleEdit(category)}
-                                            type="button"
-                                            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-300 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
-                                            aria-label={`Editar ${category.name}`}
-                                        >
-                                            <svg
-                                                className="mr-1.5 h-4 w-4"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                            >
-                                                <path d="M12 20h9" />
-                                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                                            </svg>
-
-                                            Editar
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-red-600 transition hover:border-red-200 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:border-red-500/30 dark:hover:bg-red-500/10"
-                                            aria-label={`Eliminar ${category.name}`}
-                                        >
-                                            <svg
-                                                className="mr-1.5 h-4 w-4"
-                                                viewBox="0 0 24 24"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="2"
-                                            >
-                                                <path d="M3 6h18" />
-                                                <path d="M8 6V4h8v2" />
-                                                <path d="M19 6l-1 14H6L5 6" />
-                                                <path d="M10 11v5" />
-                                                <path d="M14 11v5" />
-                                            </svg>
-
-                                            Eliminar
-                                        </button>
-                                    </div>
+                        {categories.data.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={3}>
+                                    <p className="text-center text-muted">
+                                        {search ? 'No se encontraron categorías con ese nombre.'
+                                            : 'No hay categorías registradas.'
+                                        }
+                                    </p>
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : (
+                            categories.data.map((category) => (
+                                <TableRow
+                                    key={category.id}
+                                >
+                                    {/* Nombre */}
+                                    <TableCell>
+                                        <div>
+
+                                            <p className="font-medium first-letter:uppercase">
+                                                {category.name}
+                                            </p>
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Fecha */}
+                                    <TableCell>
+                                        {formatDateTime(category.created_at)}
+                                    </TableCell>
+
+                                    {/* Acciones */}
+                                    <TableCell>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleEdit(category)}
+                                            >
+                                                <Pencil className="size-4" />
+                                                <span className="hidden md:inline">Editar</span>
+                                            </Button>
+                                            <Button
+                                                variant="danger"
+                                                size="sm"
+                                                onClick={() => { }}
+                                            >
+                                                <Trash className="size-4" />
+                                                <span className="hidden md:inline">Eliminar</span>
+                                            </Button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+
+
+
                     </TableBody>
                 </Table>
                 <TablePagination
-                    links={categories.links}
-                    total={categories.total}
-                    last_page={categories.last_page}
-                    current_page={categories.current_page}
-                    showing={categories.data.length}
+                    paginator={categories}
+                    filters={filters}
+                    onPerPageChange={handlePerPage}
                 />
             </div>
         </Layout>
@@ -268,7 +253,7 @@ function CategoryForm({ category, onClose }: CategoryFormProps) {
             <div className="flex justify-end gap-3">
                 <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     onClick={onClose}
                 >
                     Cancelar

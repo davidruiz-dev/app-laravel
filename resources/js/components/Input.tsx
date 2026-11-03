@@ -8,6 +8,8 @@ export interface InputProps
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   containerClassName?: string;
+  isRequired?: boolean;
+  isOptional?: boolean;
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
@@ -19,6 +21,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       leftIcon,
       rightIcon,
       containerClassName = "",
+      isRequired = false,
+      isOptional = false,
       className = "",
       id,
       disabled,
@@ -39,6 +43,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className="mb-1.5 block text-sm font-medium text-foreground"
           >
             {label}
+            {isRequired && <span className="text-red-500 ml-1">*</span>}
+            {isOptional && (
+              <span className="text-muted ml-1">opcional</span>
+            )}
           </label>
         )}
 
@@ -64,7 +72,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             className={[
               "block w-full rounded-lg border bg-background/40 px-3 h-10",
               "text-sm text-foreground",
-              "placeholder:text-muted-foreground",
+              "placeholder:text-muted/50",
               "outline-none transition-colors",
               "focus:ring-2",
               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -78,8 +86,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   ].join(" ")
                 : [
                     "border-border",
-                    "focus:border-primary",
-                    "focus:ring-primary/20",
+                    "focus:border-primary/50",
+                    "focus:ring-primary/30",
                   ].join(" "),
               className,
             ]

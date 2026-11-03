@@ -662,7 +662,7 @@ export default function OrderForm({
               <CardTitle>Acciones rápidas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="ghost" className="w-full" type="button" onClick={() => setShowModalChangeStatus(true)}>
+              <Button variant="outline" className="w-full" type="button" onClick={() => setShowModalChangeStatus(true)}>
                 <ShieldCheck size={17} /> Cambiar estado
               </Button>
               <Button disabled={order?.status === 'cancelled'} variant="danger" className="w-full" type="button" onClick={() => setShowModalCancelled(true)}>
@@ -674,7 +674,7 @@ export default function OrderForm({
 
 
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="ghost" onClick={() => window.history.back()}>Cancelar</Button>
+          <Button type="button" variant="outline" onClick={() => window.history.back()}>Cancelar</Button>
           <Button type="submit" disabled={form.processing || balance < 0} variant="primary">
             <Save size={17} /> {form.processing ? "Guardando..." : isEditing ? "Guardar cambios" : "Registrar pedido"}
           </Button>

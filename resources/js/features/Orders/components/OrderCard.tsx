@@ -96,7 +96,7 @@ export function OrderCard({ order }: OrderCardProps) {
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button onClick={showOrderInfo} size="sm" variant="ghost">Detalles</Button>
+                        <Button onClick={showOrderInfo} size="sm" variant="outline">Detalles</Button>
                         <Button size="sm" variant="secondary" onClick={() => setShowModalUpdateState(true)}>
                             {getButtonText(order)}
                         </Button>
@@ -156,7 +156,7 @@ export function OrderCard({ order }: OrderCardProps) {
 
                 <div className="mt-8 flex justify-between flex-wrap gap-2">
                     <div className="flex gap-2">
-                        <Button variant="ghost" onClick={handleClose}>Cerrar</Button>
+                        <Button variant="danger" onClick={handleClose}>Cerrar</Button>
                         <Link href={`/orders/${order.id}`}><Button variant="secondary">Más información</Button></Link>
                     </div>
                     <Button onClick={() => changeStatus(order)}>{getButtonText(order)}</Button>
@@ -174,7 +174,7 @@ export function OrderCard({ order }: OrderCardProps) {
                 </div>
 
                 <div className="flex gap-2 justify-end border-border mt-4">
-                    <Button variant="ghost" onClick={() => setShowModalUpdateState(false)}>Cancelar</Button>
+                    <Button variant="danger" onClick={() => setShowModalUpdateState(false)}>Cancelar</Button>
                     <Button variant="secondary" onClick={() => changeStatus(order)}>Confirmar</Button>
                 </div>
             </Modal>

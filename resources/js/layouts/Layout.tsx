@@ -11,6 +11,7 @@ import {
     Menu,
     PlusIcon,
     TagIcon,
+    User2Icon,
     Users2Icon,
     Wallet,
     X,
@@ -33,6 +34,7 @@ const items = [
     { url: "/categories", title: "Categorías", icon: <TagIcon className="size-5" /> },
     { url: "/expenses", title: "Gastos", icon: <Wallet className="size-5" /> },
     { url: "/reports", title: "Reportes", icon: <ChartBar className="size-5" /> },
+    { url: "/profile", title: "Perfil", icon: <User2Icon className="size-5" /> },
 ];
 
 export default function Layout({ children, title }: Props) {

@@ -62,18 +62,16 @@ class ExpenseController extends Controller
         //
         $validated = $request->validate([
             'type' => ['required'],
-            'method' => ['required'],
             'amount' => ['required', 'numeric', 'min:0'],
             'expense_date' => ['required', 'date'],
-            'note' => ['nullable'],
+            'description' => ['nullable'],
         ]);
 
         Expense::create([
             'type' => $validated['type'],
-            'method' => $validated['method'],
             'amount' => $validated['amount'],
             'expense_date' => $validated['expense_date'],
-            'note' => $validated['description'],
+            'description' => $validated['description'],
         ]);
 
         return redirect()

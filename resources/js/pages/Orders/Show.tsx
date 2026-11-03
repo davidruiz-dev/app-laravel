@@ -281,7 +281,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
 
                         {buttonText && (
                             <Button
-                                variant="ghost"
+                                variant="outline"
                                 size="md"
                                 disabled={processing}
                                 onClick={() => {
@@ -313,7 +313,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                         </Button>
 
                         <Link href={`/orders/${order.id}/edit`}>
-                            <Button variant="ghost" size="md">
+                            <Button variant="outline" size="md">
                                 <Pencil size={15} />
                                 <span>Editar pedido</span>
                             </Button>

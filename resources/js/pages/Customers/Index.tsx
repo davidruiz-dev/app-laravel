@@ -1,60 +1,77 @@
 import Button from "@/components/Button";
 import Layout from "@/layouts/Layout";
 import { Eye, Pencil, PlusIcon, Search, Trash } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, router } from "@inertiajs/react";
 import { formatDateTime } from "@/utils/date";
-import TablePagination, { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/Table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/Table";
 import Modal from "@/components/Modal";
 import CustomerForm from "@/features/customers/components/Form";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Paginated } from "@/types";
 import { formatPhone } from "@/utils/phone.util";
 import Input from "@/components/Input";
+import TablePagination from "@/components/TablePagination";
 
 interface Props {
   customers: Paginated<Customer>;
   filters: {
     search?: string;
+    per_page?: number;
   };
 }
 
 export default function Index({ customers, filters }: Props) {
-  const [search, setSearch] = useState(filters.search ?? '');
   const [showModal, setShowModal] = useState(false);
   const [showModalForm, setShowModalForm] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [search, setSearch] = useState(filters.search ?? '');
 
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    router.get('/customers',
-      {
-        search: value,
-      },
+  // Búsqueda debounced, preservando el resto de filtros
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const current = filters.search ?? '';
+      if (search === current) return;
+
+      router.get(
+        '/customers',
+        { ...filters, search, page: 1 },
+        {
+          preserveState: true,
+          preserveScroll: true,
+          replace: true,
+        }
+      );
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [search]);
+
+  const handlePerPage = (perPage: number) => {
+    router.get(
+      '/customers',
+      { ...filters, per_page: perPage, page: 1 },
       {
         preserveState: true,
-        replace: true,
+        preserveScroll: true,
       }
     );
   };
 
   const destroy = (id: number) => {
-    if (!confirm('¿Eliminar este cliente?')) {
-      return;
-    }
+    if (!confirm('¿Eliminar este cliente?')) return;
     router.delete(`/customers/${id}`);
   };
-
 
   const handleCreate = () => {
     setShowModalForm(true);
     setSelectedCustomer(null);
-  }
+  };
 
   const handleEdit = (customer: Customer) => {
     setShowModalForm(true);
     setSelectedCustomer(customer);
-  }
+  };
 
   const handleCloseModalForm = () => {
     setShowModalForm(false);
@@ -71,11 +88,13 @@ export default function Index({ customers, filters }: Props) {
       <div className="flex justify-between mb-4 items-center gap-10">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold">Clientes</h1>
-          <p className="text-muted text-sm md:text-base">Lista de todos tus clientes registrados en el sistema.</p>
+          <p className="text-muted text-sm md:text-base">
+            Lista de todos tus clientes registrados en el sistema.
+          </p>
         </div>
 
         <Button onClick={handleCreate} size="md">
-          <PlusIcon />
+          <PlusIcon size={17} />
           <span className="hidden md:block">Nuevo cliente</span>
         </Button>
       </div>
@@ -86,7 +105,7 @@ export default function Index({ customers, filters }: Props) {
             leftIcon={<Search size={17} />}
             type="search"
             value={search}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar cliente..."
             className="w-full md:w-6/12"
           />
@@ -102,58 +121,66 @@ export default function Index({ customers, filters }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {customers.data.length == 0 ? (
+            {customers.data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4}>No hay clientes registrados</TableCell>
+                <TableCell colSpan={4}>
+                  <p className="text-center text-muted">
+                    {search
+                      ? 'No se encontraron clientes con esa búsqueda.'
+                      : 'No hay clientes registrados.'}
+                  </p>
+                </TableCell>
               </TableRow>
-            ) :
+            ) : (
               customers.data.map((customer) => (
                 <TableRow key={customer.id}>
-                  <TableCell>{customer.full_name}</TableCell>
-                  <TableCell>{formatPhone(customer.phone)}</TableCell>
-                  <TableCell>{customer.orders_count}</TableCell>
-                  <TableCell className="flex gap-3 items-center">
-                    <Link href={`/customers/${customer.id}`}>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-300 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400" aria-label={`Edit ${customer.full_name}`}
-                      >
-                        <Eye className="size-4" />
-                        <span className="hidden md:block">Ver más</span>
-                      </button>
-                    </Link>
+                  <TableCell className="font-medium">
+                    {customer.full_name}
+                  </TableCell>
 
-                    <button
-                      onClick={() => handleEdit(customer)}
-                      type="button"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-300 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 dark:hover:text-blue-400" aria-label={`Edit ${customer.full_name}`}
-                    >
-                      <Pencil className="size-4" />
-                      <span className="hidden md:block">Editar</span>
-                    </button>
-                    <button
-                      onClick={() => destroy(customer.id)}
-                      type="button"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-red-600 transition hover:border-red-200 hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-red-400 dark:hover:border-red-500/30 dark:hover:bg-red-500/10"
-                      aria-label={`Delete ${customer.full_name}`}
-                    >
-                      <Trash className="size-4" />
-                      <span className="hidden md:block">Eliminar</span>
-                    </button>
+                  <TableCell>{formatPhone(customer.phone)}</TableCell>
+
+                  <TableCell>{customer.orders_count}</TableCell>
+
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/customers/${customer.id}`}>
+                        <Button variant="outline" size="sm">
+                          <Eye className="size-4" />
+                          <span className="hidden md:inline">Ver más</span>
+                        </Button>
+                      </Link>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(customer)}
+                      >
+                        <Pencil className="size-4" />
+                        <span className="hidden md:inline">Editar</span>
+                      </Button>
+
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => destroy(customer.id)}
+                      >
+                        <Trash className="size-4" />
+                        <span className="hidden md:inline">Eliminar</span>
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ))
+            )}
           </TableBody>
         </Table>
 
         <TablePagination
-          links={customers.links}
-          last_page={customers.last_page}
-          current_page={customers.current_page}
-          total={customers.total}
-          showing={customers.data.length}
+          paginator={customers}
+          filters={filters}
+          onPerPageChange={handlePerPage}
         />
-
 
         <Modal
           show={showModal}
@@ -172,20 +199,32 @@ export default function Index({ customers, filters }: Props) {
                   <span className="font-semibold">Teléfono</span>
                   <h1 className="text-muted">{selectedCustomer.phone}</h1>
                 </div>
-                <Link href={`https://wa.me/51${selectedCustomer.phone}`} target="_blank" rel="noopener noreferrer">
+                <Link
+                  href={`https://wa.me/51${selectedCustomer.phone}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <button
                     type="button"
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-white transition hover:border-blue-200 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 cursor-pointer" aria-label={`Edit ${selectedCustomer.full_name}`}
+                    className="inline-flex items-center rounded-full border border-slate-200 bg-white transition hover:border-blue-200 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:border-blue-500/30 dark:hover:bg-blue-500/10 cursor-pointer"
+                    aria-label={`WhatsApp ${selectedCustomer.full_name}`}
                   >
-                    <img src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png" className="size-8" width={27} height={27} />
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/512/3670/3670051.png"
+                      className="size-8"
+                      width={27}
+                      height={27}
+                      alt="WhatsApp"
+                    />
                   </button>
                 </Link>
               </div>
 
-              <p className="text-muted text-sm">Este cliente fue registrado el {formatDateTime(selectedCustomer.created_at)}</p>
+              <p className="text-muted text-sm">
+                Este cliente fue registrado el {formatDateTime(selectedCustomer.created_at)}
+              </p>
             </div>
           )}
-
         </Modal>
 
         <Modal
@@ -193,9 +232,13 @@ export default function Index({ customers, filters }: Props) {
           onClose={handleCloseModalForm}
           title={selectedCustomer ? 'Editar cliente' : 'Crear cliente'}
         >
-          <CustomerForm mode={selectedCustomer ? 'edit' : 'create'} customer={selectedCustomer} onClose={handleCloseModalForm} />
+          <CustomerForm
+            mode={selectedCustomer ? 'edit' : 'create'}
+            customer={selectedCustomer}
+            onClose={handleCloseModalForm}
+          />
         </Modal>
       </div>
     </Layout>
-  )
+  );
 }

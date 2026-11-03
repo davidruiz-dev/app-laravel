@@ -2,21 +2,82 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Layout from '@/layouts/Layout'
 import { Ban, Check, LoaderCircle, PlusIcon, Search, Timer } from 'lucide-react'
-import { Link } from '@inertiajs/react'
-import TablePagination, { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/Table'
+import { Link, router } from '@inertiajs/react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/Table'
 import { formatDateTime } from '@/utils/date'
 import { OrderStatCard } from '@/features/Orders/components/OrderStatCard'
 import { orderStatusTypeLabels } from '@/utils/order.util'
-import { Order, OrdersOverview } from '@/features/Orders/types/order.types'
+import { Order, OrdersOverview, OrderStatus } from '@/features/Orders/types/order.types'
 import { Paginated } from '@/types'
 import OrdersFilter from '@/features/Orders/components/OrdersFilter'
+import TablePagination from '@/components/TablePagination'
+import { useEffect, useRef, useState } from 'react'
+import { DateRange } from '@/components/DateRange'
 
 interface Props {
   orders: Paginated<Order>;
   overview: OrdersOverview;
+  filters: {
+    search?: string;
+    per_page?: number;
+    status?: OrderStatus;
+    date_from?: string;
+    date_to?: string;
+  };
 }
 
-export default function Index({ orders, overview }: Props) {
+export default function Index({ orders, overview, filters }: Props) {
+  const [search, setSearch] = useState(filters.search ?? '');
+  const [status, setStatus] = useState<OrderStatus | ''>(filters.status ?? '');
+  const [dateRange, setDateRange] = useState<{ startDate: string; endDate: string } | null>(null);
+
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      router.get(
+        '/orders',
+        {
+          search: search || undefined,
+          status: status || undefined,
+          date_from: dateRange?.startDate || undefined,
+          date_to: dateRange?.endDate || undefined,
+        },
+        {
+          preserveState: true,
+          preserveScroll: true,
+          replace: true,
+        }
+      );
+    }, 700);
+
+    return () => clearTimeout(timeout);
+  }, [search, status, dateRange]);
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatus('');
+    setDateRange(null);
+  };
+
+  function handleApply(range: DateRange) {
+    setDateRange(range);
+  }
+
+  const handlePerPage = (perPage: number) => {
+    router.get(
+      '/orders',
+      { ...filters, per_page: perPage, page: 1 },
+      {
+        preserveState: true,
+        preserveScroll: true,
+      }
+    );
+  };
 
   return (
     <Layout title='Pedidos'>
@@ -41,7 +102,16 @@ export default function Index({ orders, overview }: Props) {
           <OrderStatCard value={overview.total_cancelled} label="Pedidos cancelados" icon={Ban} />
         </div>
 
-        <OrdersFilter />
+        <OrdersFilter
+          clearFilters={clearFilters}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          handleApply={handleApply}
+          search={search}
+          setSearch={setSearch}
+          status={status}
+          setStatus={setStatus}
+        />
 
         <Table>
           <TableHeader>
@@ -54,38 +124,42 @@ export default function Index({ orders, overview }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-
-            {orders.data.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.customer?.full_name}</TableCell>
-                <TableCell>{formatDateTime(order.date)}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {[orderStatusTypeLabels[order.status]]}
-                  </span>
-                </TableCell>
-                <TableCell>S/{order.total}</TableCell>
-                <TableCell>
-                  <Link href={`/orders/${order.id}`}>
-                    <Button variant='ghost'>Ver detalles</Button>
-                  </Link>
+            {orders.data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5}>
+                  <p className='text-center text-muted'>
+                    {search || status || dateRange
+                      ? 'No se encontraron resultados para los filtros aplicados.'
+                      : 'No hay pedidos registrados.'}
+                  </p>
                 </TableCell>
               </TableRow>
-            ))}
-            {orders.data.length === 0 && (
-              <TableCell colSpan={5}>
-                <p className='text-center text-muted'>No se han encontrado pedidos</p>
-              </TableCell>
-            )}
+            ) : (
+              orders.data.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.customer?.full_name}</TableCell>
+                  <TableCell>{formatDateTime(order.date)}</TableCell>
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : order.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {[orderStatusTypeLabels[order.status]]}
+                    </span>
+                  </TableCell>
+                  <TableCell>S/{order.total}</TableCell>
+                  <TableCell>
+                    <Link href={`/orders/${order.id}`}>
+                      <Button variant='outline'>Ver detalles</Button>
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              )))}
+
           </TableBody>
         </Table>
 
         <TablePagination
-          showing={orders.data.length}
-          links={orders.links}
-          total={orders.total}
-          current_page={orders.current_page}
-          last_page={orders.last_page}
+          paginator={orders}
+          filters={filters}
+          onPerPageChange={handlePerPage}
         />
       </div>
     </Layout>

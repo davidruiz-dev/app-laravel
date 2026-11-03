@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
-import TablePagination from "@/components/Table";
+import TablePagination from "@/components/TablePagination";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Order, OrderStatus } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
@@ -188,11 +188,7 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
               )}
 
               <TablePagination
-                showing={orders.data.length}
-                total={orders.total}
-                links={orders.links}
-                current_page={orders.current_page}
-                last_page={orders.last_page}
+                paginator={orders}
               />
             </div>
 

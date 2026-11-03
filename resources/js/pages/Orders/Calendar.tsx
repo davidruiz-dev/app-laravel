@@ -1,12 +1,11 @@
 import Button from "@/components/Button";
 import { Order } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
-import { Link, router } from "@inertiajs/react";
+import { Head, Link, router } from "@inertiajs/react";
 import {
     ChevronLeft,
     ChevronRight,
-    CalendarDays,
-    Clock3,
+    Clock,
 } from "lucide-react";
 
 
@@ -21,10 +20,9 @@ interface Props {
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 const statusStyles: Record<string, string> = {
-    pending: "bg-blue-50 text-blue-700 border-blue-200",
-    "in_progress": "bg-amber-50 text-amber-700 border-amber-200",
-    completed: "bg-green-50 text-green-700 border-green-200",
-    cancelled: "bg-red-50 text-red-700 border-red-200",
+    pending: "bg-amber-100 text-amber-800 ring-amber-600/20",
+    "in_progress": "bg-blue-100 text-blue-800 ring-blue-600/20",
+    completed: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
 };
 
 function parseDate(value: string) {
@@ -140,36 +138,42 @@ export default function Calendar({
 
         return (
             <Link href={`/orders/${order.id}`}>
-                <a
+                <div
                     key={order.id}
                     className={`block truncate cursor-pointer rounded-md border px-2 py-1 text-xs font-medium transition-opacity hover:opacity-75 ${style}`}
                     title={`Pedido #${order.id} — ${order.status}`}
                 >
-                    <span className="font-semibold">{order.items.map((item) => (
-                        <div>
-                            {item.quantity}x {item.name}
-                        </div>
-                    ))}</span>
-                    {order.customer?.full_name && (
-                        <span className="ml-1">
-                            {order.customer.full_name}
-                        </span>
-                    )}
-                </a>
+                    <span className="font-semibold">
+                        {order.items.map((item, index) => (
+                            <div key={index}>{item.quantity}x {item.name}</div>
+                        ))}
+                    </span>
+                    <div className="flex justify-between flex-wrap">
+                        {order.customer?.full_name && (
+                            <span>{order.customer.full_name}</span>
+                        )}
+                        {order.shift && (
+                            <div className="flex gap-1 items-center text-xs">
+                                <Clock size={12} className="" /> {order.shift}
+                            </div>
+                        )}
+                    </div>
+                </div>
             </Link>
         );
     }
 
     return (
         <Layout title="Calendario">
+            <Head title="Calendario" />
             <div className="space-y-5">
                 {/* Cabecera */}
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div>
-                        <h1 className="text-2xl font-semibold">
+                        <h1 className="text-xl md:text-3xl font-semibold">
                             Calendario de pedidos
                         </h1>
-                        <p className="mt-1 text-muted">
+                        <p className="text-muted text-sm md:text-base">
                             Organiza y consulta tus pedidos por fecha.
                         </p>
                     </div>
@@ -181,7 +185,7 @@ export default function Calendar({
                 <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                     <div className="flex flex-wrap items-center gap-2">
                         <Button
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => navigate(new Date())}
                         >
                             Hoy
@@ -265,14 +269,14 @@ export default function Calendar({
 
                             return (
                                 <div
-                                    key={key}
+                                    key={index}
                                     className={`min-w-0  ${isToday ? 'border-2 border-blue-300' : 'border-b border-r border-border'} ${calendarView === "month"
-                                        ? "min-h-24 p-1 sm:min-h-32 sm:p-2"
-                                        : "min-h-36 p-2 sm:p-3"
+                                        ? "min-h-40 p-1 "
+                                        : "min-h-36 p-2"
                                         } ${calendarView === "month" &&
                                             !isCurrentMonth
-                                            ? "bg-surface"
-                                            : "bg-background"
+                                            ? "bg-background"
+                                            : "bg-surface/70"
                                         }`}
                                 >
                                     <button
@@ -319,18 +323,17 @@ export default function Calendar({
                 <div className="flex flex-wrap gap-4">
                     {[
                         ["pending", "Pendiente"],
-                        ["in_progress", "En producción"],
+                        ["in_progress", "En preparación"],
                         ["completed", "Completado"],
-                        ["cancelled", "Cancelado"],
                     ].map(([status, label]) => (
                         <div key={status} className="flex items-center gap-2">
                             <span
                                 className={`size-2.5 rounded-full ${status === "pending"
-                                    ? "bg-blue-500"
+                                    ? "bg-amber-300"
                                     : status === "in_progress"
-                                        ? "bg-amber-500"
+                                        ? "bg-blue-300"
                                         : status === "completed"
-                                            ? "bg-green-500"
+                                            ? "bg-emerald-300"
                                             : "bg-red-500"
                                     }`}
                             />

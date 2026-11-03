@@ -173,6 +173,7 @@ class OrderController extends Controller
                 $start->toDateString(),
                 $end->toDateString(),
             ])
+            ->whereIn('status', ['pending', 'completed', 'in_progress'])
             ->orderBy('date')
             ->get();
 

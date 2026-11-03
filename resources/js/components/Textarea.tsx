@@ -4,12 +4,16 @@ type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label?: string;
   error?: string;
   hint?: string;
+  isRequired?: boolean;
+  isOptional?: boolean;
 };
 
 export function Textarea({
   label,
   error,
   hint,
+  isRequired = false,
+  isOptional = false,
   id,
   className = "",
   ...props
@@ -24,6 +28,10 @@ export function Textarea({
           className="block text-sm font-medium text-foreground"
         >
           {label}
+          {isRequired && <span className="text-red-500 ml-1">*</span>}
+            {isOptional && (
+              <span className="text-muted ml-1">(opcional)</span>
+            )}
         </label>
       )}
 

@@ -1,6 +1,8 @@
 import { useForm } from "@inertiajs/react";
 import { Expense } from "../types/expense.types";
 import Button from "@/components/Button";
+import Input from "@/components/Input";
+import { Textarea } from "@/components/Textarea";
 
 interface Props {
     expense: Expense | null;
@@ -36,14 +38,8 @@ export default function ExpenseForm({ expense, onClose }: Props) {
     return (
         <form onSubmit={submit} className="space-y-6">
             <div>
-                <label
-                    htmlFor="type"
-                    className="mb-2 block text-sm font-medium"
-                >
-                    Tipo de gasto
-                </label>
-
-                <input
+                <Input
+                    label="Tipo de gasto"
                     id="type"
                     type="text"
                     value={form.data.type}
@@ -51,6 +47,7 @@ export default function ExpenseForm({ expense, onClose }: Props) {
                         form.setData('type', e.target.value)
                     }
                     className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
+                    isRequired={true}
                 />
 
                 {form.errors.type && (
@@ -61,16 +58,11 @@ export default function ExpenseForm({ expense, onClose }: Props) {
             </div>
 
             <div>
-                <label
-                    htmlFor="amount"
-                    className="mb-2 block text-sm font-medium"
-                >
-                    Monto
-                </label>
-
-                <input
+                <Input
                     id="amount"
+                    label="Monto"
                     type="number"
+                    isRequired={true}
                     value={form.data.amount}
                     onChange={(e) =>
                         form.setData('amount', e.target.value)
@@ -85,22 +77,15 @@ export default function ExpenseForm({ expense, onClose }: Props) {
                 )}
             </div>
 
-
             <div>
-                <label
-                    htmlFor="email"
-                    className="mb-2 block text-sm font-medium"
-                >
-                    Breve descripción
-                </label>
-
-                <textarea
-                    id="email"
+                <Textarea
+                    label="Descripción"
                     value={form.data.description}
                     onChange={(e) =>
                         form.setData('description', e.target.value)
                     }
                     className="w-full h-14 rounded-lg border border-border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
+                    isOptional={true}
                 />
 
                 {form.errors.description && (
@@ -111,16 +96,11 @@ export default function ExpenseForm({ expense, onClose }: Props) {
             </div>
 
             <div>
-                <label
-                    htmlFor="email"
-                    className="mb-2 block text-sm font-medium"
-                >
-                    Fecha de gasto
-                </label>
-
-                <input
+                <Input
+                    label="Fecha del gasto"
                     id="email"
                     type="date"
+                    isRequired={true}
                     value={form.data.expense_date}
                     onChange={(e) =>
                         form.setData('expense_date', e.target.value)
@@ -136,13 +116,14 @@ export default function ExpenseForm({ expense, onClose }: Props) {
             </div>
 
             <div className="flex justify-end gap-3">
-                <button
+                <Button
                     type="button"
                     onClick={onClose}
+                    variant="outline"
                     className="rounded-lg border border-border px-4 py-2"
                 >
                     Cancelar
-                </button>
+                </Button>
 
                 <Button
                     type="submit"

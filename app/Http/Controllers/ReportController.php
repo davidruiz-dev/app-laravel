@@ -13,18 +13,14 @@ use Inertia\Inertia;
 
 class ReportController extends Controller
 {
+
     public function index(Request $request)
     {
         $validated = $request->validate([
             'startDate' => ['nullable', 'date_format:Y-m-d'],
-            'endDate' => [
-                'nullable',
-                'date_format:Y-m-d',
-                'after_or_equal:startDate'
-            ],
+            'endDate' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:startDate', ],
+            'year' => ['nullable', 'integer', 'min:2000', 'max:2100'],
         ]);
-
-        $now = now();
 
         $startDate = isset($validated['startDate'])
             ? Carbon::parse($validated['startDate'])->startOfDay()
@@ -37,6 +33,7 @@ class ReportController extends Controller
         // Indicadores
         $sales = Order::query()
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', '!=', 'cancelled')
             ->sum('total');
 
         $totalRevenue = Payment::query()
@@ -53,21 +50,22 @@ class ReportController extends Controller
             ? ($profit / $sales) * 100
             : 0;
 
-        // Ingresos agrupados por día
+        $selectedYear = $validated['year'] ?? now()->year;
+        // Ingresos agrupados por mes
         $income = Payment::query()
-            ->selectRaw('MONTH(paid_at) as month, SUM(amount) as total')
-            ->whereYear('paid_at', $now->year)
-            ->groupByRaw('MONTH(paid_at)')
+            ->selectRaw("strftime('%m', paid_at) as month, SUM(amount) as total")
+            ->whereYear('paid_at', $selectedYear)
+            ->groupByRaw("strftime('%m', paid_at)")
             ->pluck('total', 'month');
 
-        // Egresos agrupados por mes
+        // Egresos agrupados por mes 
         $expenses = Expense::query()
-            ->selectRaw('MONTH(expense_date) as month, SUM(amount) as total')
-            ->whereYear('expense_date', $now->year)
-            ->groupByRaw('MONTH(expense_date)')
+            ->selectRaw("strftime('%m', expense_date) as month, SUM(amount) as total")
+            ->whereYear('expense_date', $selectedYear)
+            ->groupByRaw("strftime('%m', expense_date)")
             ->pluck('total', 'month');
 
-        // Construir datos para todos los días del mes
+        // Nombres de los meses
         $months = [
             1 => 'Ene',
             2 => 'Feb',
@@ -83,22 +81,24 @@ class ReportController extends Controller
             12 => 'Dic',
         ];
 
+        // Construir datos para el gráfico
         $chartData = collect($months)->map(function ($name, $month) use ($income, $expenses) {
             return [
                 'month' => $name,
-                'income' => (float) ($income[$month] ?? 0),
-                'expenses' => (float) ($expenses[$month] ?? 0),
+                'income' => (float) ($income[sprintf('%02d', $month)] ?? 0),
+                'expenses' => (float) ($expenses[sprintf('%02d', $month)] ?? 0),
             ];
         })->values();
 
+        // Ingresos por categoría
         $categoryIncome = DB::table('order_items')
             ->join('categories', 'categories.id', '=', 'order_items.category_id')
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->selectRaw('
-                categories.id,
-                categories.name as category,
-                SUM(order_items.subtotal) as total
-            ')
+            categories.id,
+            categories.name as category,
+            SUM(order_items.subtotal) as total
+        ')
             ->whereBetween('orders.created_at', [$startDate, $endDate])
             ->where('orders.status', '!=', 'cancelled')
             ->groupBy('categories.id', 'categories.name')
@@ -109,7 +109,7 @@ class ReportController extends Controller
                 'total' => (float) $item->total,
             ]);
 
-        // Clientes nuevos: primera compra dentro del periodo
+        // Clientes nuevos
         $newCustomers = Customer::query()
             ->whereHas('orders', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate])
@@ -121,7 +121,7 @@ class ReportController extends Controller
             })
             ->count();
 
-        // Clientes recurrentes: compraron en el periodo y antes de él
+        // Clientes recurrentes
         $recurringCustomers = Customer::query()
             ->whereHas('orders', function ($query) use ($startDate, $endDate) {
                 $query->whereBetween('created_at', [$startDate, $endDate])
@@ -135,11 +135,11 @@ class ReportController extends Controller
 
         return Inertia::render('Reports/Index', [
             'stats' => [
-                'sales' => $sales,
-                'totalRevenue' => $totalRevenue,
-                'totalExpenses' => $totalExpenses,
-                'profit' => $profit,
-                'profitMargin' => $profitMargin,
+                'sales' => (float) $sales,
+                'totalRevenue' => (float) $totalRevenue,
+                'totalExpenses' => (float) $totalExpenses,
+                'profit' => (float) $profit,
+                'profitMargin' => (float) $profitMargin,
             ],
             'chartData' => $chartData,
             'categoryIncome' => $categoryIncome,
@@ -150,6 +150,7 @@ class ReportController extends Controller
             'filters' => [
                 'startMonth' => $startDate->format('Y-m'),
                 'endMonth' => $endDate->format('Y-m'),
+                'year' => (int) $selectedYear,
             ],
         ]);
     }

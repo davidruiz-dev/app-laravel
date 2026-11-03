@@ -9,6 +9,7 @@ import { CashFlowData, ReportStats } from "@/features/Reports/types/report.types
 import Layout from "@/layouts/Layout";
 import { formatCurrency } from "@/utils/currency.util";
 import { Printer } from "lucide-react";
+import { router } from "@inertiajs/react";
 
 interface ReportIndexProps {
     stats: ReportStats;
@@ -18,10 +19,21 @@ interface ReportIndexProps {
         new: number;
         recurring: number;
     };
+    year: number;
 }
 
-export default function ReportsIndex({ stats, chartData, categoryIncome, customerStats }: ReportIndexProps) {
-
+export default function ReportsIndex({ stats, chartData, categoryIncome, customerStats, year }: ReportIndexProps) {
+    const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedYear = e.target.value;
+        router.get(
+            '/reports',
+            { year: selectedYear },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+    }
     return (
         <Layout title="Reportes">
             <div className="space-y-6" id="report-content">
@@ -68,7 +80,23 @@ export default function ReportsIndex({ stats, chartData, categoryIncome, custome
                 <div className="report-chart">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Ingresos vs. Egresos</CardTitle>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>Ingresos vs. Egresos</CardTitle>
+                                <select
+                                    value={year}
+                                    onChange={(e) => handleYearChange(e)}
+                                    className="rounded-lg border border-border bg-background px-3 py-2"
+                                >
+                                    {Array.from(
+                                        { length: 5 },
+                                        (_, i) => new Date().getFullYear() - i
+                                    ).map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <IncomeExpensesChart data={chartData} />
