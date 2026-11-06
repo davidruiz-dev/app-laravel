@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Orderitem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CustomerController extends Controller
@@ -119,7 +120,23 @@ class CustomerController extends Controller
      */
     public function destroy(Customer $customer)
     {
-        $customer->delete();
-        return redirect()->route('customers.index')->with('success', 'Cliente eliminado correctamente.');
+        $message = DB::transaction(function () use ($customer) {
+
+            $hasRelations = $customer->orders()->exists();
+
+            if ($hasRelations) {
+                $customer->delete();
+
+                return 'El cliente fue desactivado correctamente.';
+            } else {
+                $customer->forceDelete();
+
+                return 'El cliente fue eliminado permanentemente.';
+            }
+        });
+
+        return redirect()
+            ->route('customers.index')
+            ->with('success', $message);
     }
 }

@@ -64,7 +64,7 @@ export default function Layout({ children, title }: Props) {
             <FlashMessage />
             {/* Barra superior: solo móvil */}
             <header className="md:hidden fixed top-0 inset-x-0 z-40 h-16
-                bg-surface border-b border-border flex items-center
+                bg-background border-b border-border flex items-center
                 justify-between px-4">
                 <button
                     onClick={() => setMenuOpen(!menuOpen)}
@@ -96,7 +96,7 @@ export default function Layout({ children, title }: Props) {
             <aside
                 className={`
                     fixed left-0 top-0 z-50 h-screen w-64
-                    bg-surface border-r border-border
+                     bg-surface border-r border-border
                     flex flex-col p-4
                     transition-transform duration-300
                     md:translate-x-0

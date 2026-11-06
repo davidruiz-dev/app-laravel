@@ -26,6 +26,7 @@ export default function Index({ customers, filters }: Props) {
   const [showModalForm, setShowModalForm] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [search, setSearch] = useState(filters.search ?? '');
+  const [showModalDelete, setShowModalDelete] = useState(false);
 
   // Búsqueda debounced, preservando el resto de filtros
   useEffect(() => {
@@ -82,6 +83,8 @@ export default function Index({ customers, filters }: Props) {
     setShowModal(false);
     setSelectedCustomer(null);
   };
+
+ 
 
   return (
     <Layout title="Clientes">
@@ -140,7 +143,7 @@ export default function Index({ customers, filters }: Props) {
 
                   <TableCell>{formatPhone(customer.phone)}</TableCell>
 
-                  <TableCell>{customer.orders_count}</TableCell>
+                  <TableCell>{customer.orders_count} pedidos</TableCell>
 
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -160,14 +163,6 @@ export default function Index({ customers, filters }: Props) {
                         <span className="hidden md:inline">Editar</span>
                       </Button>
 
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => destroy(customer.id)}
-                      >
-                        <Trash className="size-4" />
-                        <span className="hidden md:inline">Eliminar</span>
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -182,6 +177,7 @@ export default function Index({ customers, filters }: Props) {
           onPerPageChange={handlePerPage}
         />
 
+        
         <Modal
           show={showModal}
           onClose={handleClose}
@@ -226,6 +222,8 @@ export default function Index({ customers, filters }: Props) {
             </div>
           )}
         </Modal>
+
+
 
         <Modal
           show={showModalForm}

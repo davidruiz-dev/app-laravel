@@ -1,10 +1,10 @@
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Layout from '@/layouts/Layout'
-import { Ban, Check, LoaderCircle, PlusIcon, Search, Timer } from 'lucide-react'
+import { Ban, Check, Clock, LoaderCircle, PlusIcon, Search, Timer } from 'lucide-react'
 import { Link, router } from '@inertiajs/react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/Table'
-import { formatDateTime } from '@/utils/date'
+import { formatDate, formatDateTime } from '@/utils/date'
 import { OrderStatCard } from '@/features/Orders/components/OrderStatCard'
 import { orderStatusTypeLabels } from '@/utils/order.util'
 import { Order, OrdersOverview, OrderStatus } from '@/features/Orders/types/order.types'
@@ -119,7 +119,7 @@ export default function Index({ orders, overview, filters }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead>Cliente</TableHead>
-              <TableHead>Fecha entrega</TableHead>
+              <TableHead>Fecha de entrega</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Acciones</TableHead>
@@ -140,10 +140,17 @@ export default function Index({ orders, overview, filters }: Props) {
               orders.data.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell>{order.customer?.full_name}</TableCell>
-                  <TableCell>{formatDateTime(order.date)}</TableCell>
                   <TableCell>
-                  
-
+                    <div className='flex items-center gap-3'>
+                      {formatDate(order.date)} {order.shift && (
+                    <div className='flex items-center gap-1 text-sm'>
+                      <Clock size={17}/>
+                      <span>{order.shift}</span>
+                    </div>
+                  )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <OrderStatusBadge status={order.status} />
                   </TableCell>
                   <TableCell>S/{order.total}</TableCell>

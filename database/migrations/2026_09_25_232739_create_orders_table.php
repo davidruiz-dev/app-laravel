@@ -30,6 +30,7 @@ return new class extends Migration
             $table->string('delivery_address')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

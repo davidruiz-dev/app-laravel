@@ -20,6 +20,7 @@ interface Props {
 
 export default function Index({ categories, filters }: Props) {
     const [showModal, setShowModal] = useState(false);
+    const [showModalDelete, setShowModalDelete] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
 
@@ -43,15 +44,15 @@ export default function Index({ categories, filters }: Props) {
     }, [search]);
 
     const handlePerPage = (perPage: number) => {
-    router.get(
-      '/categories',
-      { ...filters, per_page: perPage, page: 1 },
-      {
-        preserveState: true,
-        preserveScroll: true,
-      }
-    );
-  };
+        router.get(
+            '/categories',
+            { ...filters, per_page: perPage, page: 1 },
+            {
+                preserveState: true,
+                preserveScroll: true,
+            }
+        );
+    };
 
     const handleCreate = () => {
         setSelectedCategory(null);
@@ -67,6 +68,22 @@ export default function Index({ categories, filters }: Props) {
         setShowModal(false);
         setSelectedCategory(null);
     };
+
+    const handleDelete = (category: Category) => {
+        setSelectedCategory(category);
+        setShowModalDelete(true);
+    }
+
+    const confirmDelete = () => {
+        if (!selectedCategory) return;
+        router.delete(`/categories/${selectedCategory.id}`, {
+            onSuccess: () => {
+                setShowModalDelete(false);
+                setSelectedCategory(null);
+            }
+        }
+        )
+    }
 
 
     return (
@@ -111,6 +128,7 @@ export default function Index({ categories, filters }: Props) {
                         <TableRow>
                             <TableHead>Nombre</TableHead>
                             <TableHead>Fecha de creación</TableHead>
+                            <TableHead>Cantidad de pedidos</TableHead>
                             <TableHead>Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -133,7 +151,6 @@ export default function Index({ categories, filters }: Props) {
                                     {/* Nombre */}
                                     <TableCell>
                                         <div>
-
                                             <p className="font-medium first-letter:uppercase">
                                                 {category.name}
                                             </p>
@@ -143,6 +160,10 @@ export default function Index({ categories, filters }: Props) {
                                     {/* Fecha */}
                                     <TableCell>
                                         {formatDateTime(category.created_at)}
+                                    </TableCell>
+
+                                    <TableCell>
+                                        {`${Number(category.order_items_count)} pedido(s)`}
                                     </TableCell>
 
                                     {/* Acciones */}
@@ -156,22 +177,30 @@ export default function Index({ categories, filters }: Props) {
                                                 <Pencil className="size-4" />
                                                 <span className="hidden md:inline">Editar</span>
                                             </Button>
-                                            <Button
-                                                variant="danger"
-                                                size="sm"
-                                                onClick={() => { }}
-                                            >
-                                                <Trash className="size-4" />
-                                                <span className="hidden md:inline">Eliminar</span>
-                                            </Button>
+                                            {Number(category.order_items_count) <= 0 ? (
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    onClick={() => handleDelete(category)}
+                                                >
+                                                    <Trash className="size-4" />
+                                                    <span className="hidden md:inline">Eliminar</span>
+                                                </Button>
+                                            ): (
+                                                <Button
+                                                    variant="danger"
+                                                    size="sm"
+                                                    disabled
+                                                >
+                                                    <Trash className="size-4" />
+                                                    <span className="hidden md:inline">Eliminar</span>
+                                                </Button>
+                                            )}
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             ))
                         )}
-
-
-
                     </TableBody>
                 </Table>
                 <TablePagination
@@ -179,6 +208,23 @@ export default function Index({ categories, filters }: Props) {
                     filters={filters}
                     onPerPageChange={handlePerPage}
                 />
+
+                <Modal
+                    show={showModalDelete}
+                    onClose={() => setShowModalDelete(false)}
+                    title={'Eliminar categoría'}
+                >
+                    <div className="space-y-3">
+                        <p>Esta categoría se eliminará permanentemente. ¿Deseas continuar?</p>
+                        <div className="flex justify-end gap-3 mt-5">
+                            <Button variant="outline" onClick={() => setShowModalDelete(false)}>
+                                Cancelar
+                            </Button>
+                            <Button variant="danger" onClick={confirmDelete}>Confirmar</Button>
+                        </div>
+                    </div>
+
+                </Modal>
             </div>
         </Layout>
     )

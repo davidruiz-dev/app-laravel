@@ -23,6 +23,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = $request->integer('per_page', 10);
         $query = Order::with('customer', 'items.category', 'payments')
             ->when($request->status, function ($query, $status) {
                 $query->where('status', 'like', "%{$status}%");
@@ -41,7 +42,7 @@ class OrderController extends Controller
 
         $orders = $query
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         $ordersPending = Order::where('status', 'pending')->count();
@@ -62,6 +63,7 @@ class OrderController extends Controller
                 'search',
                 'date_from',
                 'date_to',
+                'per_page'
             ])
         ]);
     }

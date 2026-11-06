@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('type'); // advance, balance
             $table->string('note')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

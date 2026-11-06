@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('social_network')->nullable();
             $table->string('phone')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

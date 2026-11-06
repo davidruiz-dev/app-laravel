@@ -37,20 +37,18 @@ export default function TablePagination<T>({
 
     return (
         <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-
-
             <div className="flex items-center gap-8 text-sm text-gray-600 dark:text-gray-400 flex-wrap">
                 {/* Info + per page */}
                 {onPerPageChange && (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Filas por página:</span>
+                        <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400">Filas por página:</span>
                         <select
-                            value={per_page}
+                            value={String(per_page)}
                             onChange={(e) => onPerPageChange(Number(e.target.value))}
                             className="rounded-md p-1 border border-border outline-none"
                         >
                             {perPageOptions.map((opt) => (
-                                <option key={opt} value={opt}>
+                                <option key={opt} value={String(opt)}>
                                     {opt}
                                 </option>
                             ))}
@@ -89,7 +87,7 @@ export default function TablePagination<T>({
                             )}
                             preserveScroll
                             preserveState
-                            className={`rounded-md px-3 py-2 text-sm font-medium transition ${p === current_page
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${p === current_page
                                 ? 'bg-primary text-white'
                                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
                                 }`}

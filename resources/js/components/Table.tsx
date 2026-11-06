@@ -13,7 +13,7 @@ type TableCellProps = React.ComponentProps<"td">;
 
 export function Table({ className = "", ...props }: TableProps) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="overflow-x-auto rounded-xl border border-border shadow-sm">
             <table
                 className={`w-full text-left text-sm`}
                 {...props}
@@ -28,7 +28,7 @@ export function TableHeader({
 }: TableSectionProps) {
     return (
         <thead
-            className={`border-b border-slate-200 bg-slate-50 text-xs tracking-wider text-slate-500 dark:border-neutral-800 dark:bg-neutral-800/60 dark:text-slate-400`}
+            className={`border-b border-border bg-background/50 text-xs tracking-wider ${className}`}
             {...props}
         />
     );
@@ -40,7 +40,7 @@ export function TableBody({
 }: TableBodyProps) {
     return (
         <tbody
-            className={`[&_tr:last-child]:border-0 ${className} divide-y divide-slate-100 dark:divide-neutral-800`}
+            className={`[&_tr:last-child]:border-0 ${className} divide-y divide-border`}
             {...props}
         />
     );
@@ -52,7 +52,7 @@ export function TableRow({
 }: TableRowProps) {
     return (
         <tr
-            className={`group bg-white transition-colors hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800/70`}
+            className={`group bg-transparent transition-colors hover:bg-background  `}
             {...props}
         />
     );
@@ -64,7 +64,7 @@ export function TableHead({
 }: TableHeadProps) {
     return (
         <th
-            className={`${className} px-3 py-3.5 `}
+            className={`${className} px-3 py-3.5 bg-gray-100/60 dark:bg-background/50`}
             {...props}
         />
     );
@@ -76,7 +76,7 @@ export function TableCell({
 }: TableCellProps) {
     return (
         <td
-            className={`px-3 py-4 font-medium text-slate-900 dark:text-slate-50 whitespace-nowrap first-letter:uppercase ${className}`}
+            className={`p-3 font-medium whitespace-nowrap first-letter:uppercase ${className}`}
             {...props}
         />
     );

@@ -13,6 +13,7 @@ class ExpenseController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = $request->integer('per_page', 10);
         $query = Expense::query()
             ->when($request->search, function ($query, $search) {
                 $query->where('description', 'like', "%{$search}%");
@@ -31,7 +32,7 @@ class ExpenseController extends Controller
 
         $expenses = $query
             ->latest()
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Expenses/Index', [
@@ -42,6 +43,7 @@ class ExpenseController extends Controller
                 'type',
                 'date_from',
                 'date_to',
+                'per_page'
             ]),
         ]);
     }

@@ -1,4 +1,6 @@
+import Button from "@/components/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
+import Modal from "@/components/Modal";
 import TablePagination from "@/components/TablePagination";
 import { Customer } from "@/features/customers/types/customer.types";
 import { OrderStatusBadge } from "@/features/Orders/components/OrderStatusBadge";
@@ -6,8 +8,9 @@ import { Order, OrderStatus } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
 import { Paginated } from "@/types";
 import { formatDate, formatDateTime, getRemainingDays } from "@/utils/date";
-import { Link } from "@inertiajs/react";
-import { Calendar1Icon, Clock, Mail, MessageCircle, PackageOpen, Phone, } from "lucide-react";
+import { Link, router } from "@inertiajs/react";
+import { Calendar1Icon, Clock, Mail, MessageCircle, PackageOpen, Phone, Trash, } from "lucide-react";
+import { useState } from "react";
 
 interface CustomerShowProps {
   customer: Customer;
@@ -72,7 +75,7 @@ function OrderCard({ order }: { order: Order }) {
             </span>
           </div>
         </div>
-        
+
         <OrderStatusBadge status={order.status} />
       </div>
 
@@ -110,12 +113,38 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
 
   const wasUpdated = new Date(customer.updated_at).getTime() - new Date(customer.created_at).getTime() > 60_000;
 
+  const [showModalDelete, setShowModalDelete] = useState(false);
+
+  const handleDelete = () => {
+    setShowModalDelete(true);
+  }
+
+  const hasOrders = (): boolean => {
+    return (orders.total ?? 0) > 0;
+  };
+
+  const confirmDelete = () => {
+    router.delete(`/customers/${customer.id}`
+    )
+  }
+
   return (
     <Layout title="Cliente">
       <div className="space-y-5">
-        <div>
-          <h1 className="text-xl md:text-3xl font-semibold">Detalles del cliente</h1>
-          <p className="text-muted text-sm md:text-base">Información del cliente y todos los pedidos que ha realizado a lo largo del tiempo.</p>
+        <div className="flex justify-between items-center gap-4">
+          <div>
+            <h1 className="text-xl md:text-3xl font-semibold">Detalles del cliente</h1>
+            <p className="text-muted text-sm md:text-base">Información del cliente y todos los pedidos que ha realizado a lo largo del tiempo.</p>
+          </div>
+
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => handleDelete()}
+          >
+            <Trash className="size-4" />
+            <span className="hidden md:inline">Eliminar</span>
+          </Button>
         </div>
 
         <Card>
@@ -186,6 +215,31 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
 
           </CardContent>
         </Card>
+
+        {customer && (
+          <Modal
+            show={showModalDelete}
+            onClose={() => setShowModalDelete(false)}
+            title={'Eliminar'}
+          >
+            <div className="space-y-3">
+              <p>
+                {hasOrders()
+                  ? 'No puedes eliminar este cliente porque tiene pedidos asociados.'
+                  : 'Se eliminará el cliente permanentemente. ¿Deseas continuar?'}
+              </p>
+              <div className="flex justify-end gap-3 mt-5">
+                <Button variant="outline" onClick={() => setShowModalDelete(false)}>
+                  Cancelar
+                </Button>
+                {!hasOrders() && (
+                  <Button variant="danger" onClick={() => confirmDelete()}>Confirmar</Button>
+                )}
+              </div>
+            </div>
+
+          </Modal>
+        )}
       </div>
     </Layout>
   );

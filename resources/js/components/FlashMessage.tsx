@@ -30,28 +30,60 @@ export default function FlashMessages() {
     const message = flash.success || flash.error;
 
     return (
-        <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div
-                className={`flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg ${
-                    isSuccess
-                        ? 'border-green-200 bg-green-50 text-green-800'
-                        : 'border-red-200 bg-red-50 text-red-800'
-                }`}
+                className={`relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in zoom-in-95 fade-in duration-300`}
                 role="alert"
             >
-                {isSuccess ? (
-                    <CheckCircle className="size-5 text-green-600" />
-                ) : (
-                    <XCircle className="size-5 text-red-600" />
-                )}
-                <span className="text-sm font-medium">{message}</span>
+                {/* Botón cerrar */}
                 <button
                     onClick={() => setVisible(false)}
-                    className="ml-2 rounded p-1 hover:bg-black/5"
+                    className="absolute right-4 top-4 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
                     aria-label="Cerrar"
                 >
-                    <X className="size-4" />
+                    <X className="size-5" />
                 </button>
+
+                {/* Icono */}
+                <div className="flex flex-col items-center text-center">
+                    <div
+                        className={`mb-4 flex size-16 items-center justify-center rounded-full ${
+                            isSuccess ? 'bg-green-100' : 'bg-red-100'
+                        }`}
+                    >
+                        {isSuccess ? (
+                            <CheckCircle className="size-9 text-green-600" />
+                        ) : (
+                            <XCircle className="size-9 text-red-600" />
+                        )}
+                    </div>
+
+                    {/* Título */}
+                    <h2
+                        className={`mb-2 text-xl font-bold ${
+                            isSuccess ? 'text-green-700' : 'text-red-700'
+                        }`}
+                    >
+                        {isSuccess ? '¡Operación exitosa!' : '¡Ha ocurrido un error!'}
+                    </h2>
+
+                    {/* Mensaje */}
+                    <p className="text-sm leading-relaxed text-gray-600">
+                        {message}
+                    </p>
+
+                    {/* Botón aceptar */}
+                    <button
+                        onClick={() => setVisible(false)}
+                        className={`mt-6 w-full rounded-lg px-5 py-3 text-sm font-semibold text-white transition ${
+                            isSuccess
+                                ? 'bg-green-600 hover:bg-green-700'
+                                : 'bg-red-600 hover:bg-red-700'
+                        }`}
+                    >
+                        Aceptar
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -78,14 +78,13 @@ export default function ExpenseForm({ expense, onClose }: Props) {
             </div>
 
             <div>
-                <Textarea
+                <Input
                     label="Descripción"
+                    isRequired={true}
                     value={form.data.description}
                     onChange={(e) =>
                         form.setData('description', e.target.value)
                     }
-                    className="w-full h-14 rounded-lg border border-border bg-background px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
-                    isOptional={true}
                 />
 
                 {form.errors.description && (

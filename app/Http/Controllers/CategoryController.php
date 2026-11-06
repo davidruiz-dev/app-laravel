@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CategoryController extends Controller
@@ -13,19 +14,22 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = $request->integer('per_page', 15);
         $search = $request->string('search')->trim();
         $categories = Category::query()
             ->when($search->isNotEmpty(), function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
             ->latest()
-            ->paginate(15)
+            ->withCount('orderItems')
+            ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('Categories/Index', [
             'categories' => $categories,
             'filters' => [
                 'search' => $search->value(),
+                'per_page' => $perPage,
             ],
         ]);
     }
@@ -33,10 +37,7 @@ class CategoryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -60,7 +61,6 @@ class CategoryController extends Controller
     public function show(string $id)
     {
         $category = Category::query()->findOrFail($id);
-
     }
 
     /**
@@ -97,10 +97,23 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        $category->delete();
+        $message = DB::transaction(function () use ($category) {
+
+            $hasRelations = $category->orderItems()->exists();
+
+            if ($hasRelations) {
+                $category->delete();
+
+                return 'La categoría fue desactivada correctamente.';
+            } else {
+                $category->forceDelete();
+
+                return 'La categoría fue eliminada permanentemente.';
+            }
+        });
 
         return redirect()
             ->route('categories.index')
-            ->with('success', 'Categoría eliminada correctamente.');
+            ->with('success', $message);
     }
 }
