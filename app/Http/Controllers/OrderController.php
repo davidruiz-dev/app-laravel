@@ -264,7 +264,9 @@ class OrderController extends Controller
             'payments.*.paid_at' => ['required', 'date'],
         ]);
 
-        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary(
+            config('cloudinary.cloud_url')
+        );
         $uploadedImages = [];
 
         try {
@@ -479,7 +481,9 @@ class OrderController extends Controller
             'items.*.remove_image' => ['nullable', 'boolean'],
         ]);
 
-        $cloudinary = new Cloudinary();
+        $cloudinary = new Cloudinary(
+            config('cloudinary.cloud_url')
+        );
 
         $uploadedImages = [];
         $imagesToDelete = [];

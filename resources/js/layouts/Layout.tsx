@@ -105,8 +105,8 @@ export default function Layout({ children, title }: Props) {
             >
                 <div className="mb-6 py-3 flex flex-col items-center">
                     <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-2xl font-bold text-indigo-700">
-                                    {currentUser.name.charAt(0).toUpperCase()}
-                                </div>
+                        {currentUser.name.charAt(0).toUpperCase()}
+                    </div>
 
                     <h1 className="font-bold mt-2">
                         {currentUser.name}

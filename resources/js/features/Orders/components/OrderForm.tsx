@@ -32,7 +32,6 @@ import type { Customer } from "@/features/customers/types/customer.types";
 import type { Category } from "@/features/Categories/types/category.types";
 import { Order, OrderStatus } from "../types/order.types";
 import Modal from "@/components/Modal";
-import { formatPhone } from "@/utils/phone.util";
 import { orderStatusTypeLabels } from "@/utils/order.util";
 
 type PaymentMethod = "yape" | "plin" | "transferencia" | "efectivo" | "otro";
@@ -45,7 +44,7 @@ type OrderItemFormData = {
   name: string;
   description: string;
   quantity: number;
-  subtotal: number;
+  subtotal: string;
   customization: string;
   image: File | null;
   image_url: string | null;
@@ -53,7 +52,7 @@ type OrderItemFormData = {
 };
 
 type OrderPaymentFormData = {
-  amount: number;
+  amount: string;
   method: PaymentMethod;
   type: PaymentType;
   paid_at: string;
@@ -103,7 +102,7 @@ const createEmptyItem = (): OrderItemFormData => ({
   name: "",
   description: "",
   quantity: 1,
-  subtotal: 0,
+  subtotal: "",
   customization: "",
   image: null,
   image_url: null,
@@ -126,7 +125,7 @@ const createInitialData = (order?: Order | null): OrderFormData => ({
         name: item.name,
         description: item.description ?? "",
         quantity: Number(item.quantity),
-        subtotal: Number(item.subtotal),
+        subtotal: item.subtotal.toString(),
         customization: item.customization ?? "",
         image: null,
         image_url: item.image_url ?? null,
@@ -261,7 +260,7 @@ export default function OrderForm({
   const addPayment = () => {
     form.setData("payments", [
       ...form.data.payments,
-      { amount: 0, method: "yape", type: "advance", paid_at: localDateTime() },
+      { amount: '', method: "yape", type: "advance", paid_at: localDateTime() },
     ]);
   };
 
@@ -448,7 +447,9 @@ export default function OrderForm({
                         min="0"
                         step="0.01"
                         value={item.subtotal}
-                        onChange={(event) => updateItem(index, "subtotal", Math.max(0, Number(event.target.value)))}
+                        onChange={(event) =>
+                          updateItem(index, "subtotal", event.target.value)
+                        }
                       />
                     </div>
                     <div>
@@ -522,14 +523,14 @@ export default function OrderForm({
                     type="button"
                     onClick={() => updateDelivery(false)}
                     className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${!form.data.delivery
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "border-border hover:border-primary/50"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border hover:border-primary/50"
                       }`}
                   >
                     <div className="flex w-full items-center justify-between">
                       <div className={`rounded-lg p-2 ${!form.data.delivery
-                          ? "bg-primary/10 text-primary"
-                          : "bg-background text-muted"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-background text-muted"
                         }`}>
                         <Store size={22} />
                       </div>
@@ -550,14 +551,14 @@ export default function OrderForm({
                     type="button"
                     onClick={() => updateDelivery(true)}
                     className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${form.data.delivery
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                        : "border-border hover:border-primary/50 "
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "border-border hover:border-primary/50 "
                       }`}
                   >
                     <div className="flex w-full items-center justify-between">
                       <div className={`rounded-lg p-2 ${form.data.delivery
-                          ? "bg-primary/10 text-primary"
-                          : "bg-background text-muted"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-background text-muted"
                         }`}>
                         <Truck size={22} />
                       </div>
@@ -608,7 +609,7 @@ export default function OrderForm({
                       min="0"
                       step="0.01"
                       value={payment.amount}
-                      onChange={(event) => updatePayment(index, "amount", Math.max(0, Number(event.target.value)))}
+                      onChange={(event) => updatePayment(index, "amount", event.target.value)}
                     />
                     <div>
                       <label className="mb-2 block text-sm font-medium">Método de pago</label>
