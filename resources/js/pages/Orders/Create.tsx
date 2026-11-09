@@ -7,7 +7,8 @@ interface Props {
   customers: Customer[];
   categories: Category[];
   filters: {
-    search?: string;
+    search_customer?: string;
+    search_category?: string;
   };
 }
 
@@ -19,7 +20,8 @@ export default function Create({ customers, categories, filters }: Props) {
           <h1 className="text-3xl font-semibold">Nuevo pedido</h1>
           <p className="text-muted">Completa los datos requeridos para crear un nuevo pedido.</p>
         </div>
-        <OrderForm customers={customers} categories={categories} search={filters.search ?? ''} />
+        <OrderForm customers={customers} categories={categories} searchCustomer={filters.search_customer ?? ''}
+         searchCategory={filters.search_category ?? ''} />
       </div>
     </Layout>
   )

@@ -12,6 +12,7 @@ import { Paginated } from "@/types";
 import { formatPhone } from "@/utils/phone.util";
 import Input from "@/components/Input";
 import TablePagination from "@/components/TablePagination";
+import PhoneNumber from "@/features/customers/components/PhoneNumber";
 
 interface Props {
   customers: Paginated<Customer>;
@@ -84,7 +85,7 @@ export default function Index({ customers, filters }: Props) {
     setSelectedCustomer(null);
   };
 
- 
+
 
   return (
     <Layout title="Clientes">
@@ -141,9 +142,12 @@ export default function Index({ customers, filters }: Props) {
                     {customer.full_name}
                   </TableCell>
 
-                  <TableCell>{formatPhone(customer.phone)}</TableCell>
+                  <TableCell><PhoneNumber
+                    phone={customer.phone}
+                    canReveal={true}
+                  /></TableCell>
 
-                  <TableCell>{customer.orders_count} pedidos</TableCell>
+                  <TableCell>{customer.orders_count} pedido(s)</TableCell>
 
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -177,7 +181,7 @@ export default function Index({ customers, filters }: Props) {
           onPerPageChange={handlePerPage}
         />
 
-        
+
         <Modal
           show={showModal}
           onClose={handleClose}

@@ -48,6 +48,7 @@ class OrderController extends Controller
         $ordersPending = Order::where('status', 'pending')->count();
         $ordersInProgress = Order::where('status', 'in_progress')->count();
         $ordersCompleted = Order::where('status', 'completed')->count();
+        $ordersDelivered = Order::where('status', 'delivered')->count();
         $ordersCancelled = Order::where('status', 'cancelled')->count();
 
         return Inertia::render('Orders/Index', [
@@ -57,6 +58,7 @@ class OrderController extends Controller
                 'total_in_progress' => $ordersInProgress,
                 'total_completed' => $ordersCompleted,
                 'total_cancelled' => $ordersCancelled,
+                'total_delivered' => $ordersDelivered,
             ],
             'filters' => $request->only([
                 'status',
@@ -192,31 +194,38 @@ class OrderController extends Controller
     public function create(Request $request)
     {
         $validated = $request->validate([
-            'search' => ['nullable', 'string', 'min:1', 'max:100'],
+            'search_customer' => ['nullable', 'string', 'min:1', 'max:100'],
+            'search_category' => ['nullable', 'string', 'min:1', 'max:100'],
         ]);
 
-        $search = trim($validated['search'] ?? '');
+        $searchCustomer = trim($validated['search_customer'] ?? '');
+        $searchCategory = trim($validated['search_category'] ?? '');
 
         $customers = Customer::query()
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+            ->when($searchCustomer !== '', function ($query) use ($searchCustomer) {
+                $query->where(function ($query) use ($searchCustomer) {
+                    $query->where('full_name', 'like', "%{$searchCustomer}%")
+                        ->orWhere('phone', 'like', "%{$searchCustomer}%");
                 });
             })
             ->orderBy('full_name')
-            ->limit(10)
+            ->limit(15)
             ->get(['id', 'full_name', 'phone']);
 
         $categories = Category::query()
-            ->latest()
-            ->get();
+            ->when($searchCategory !== '', function ($query) use ($searchCategory) {
+                $query->where('name', 'like', "%{$searchCategory}%");
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name']);
 
         return Inertia::render('Orders/Create', [
             'customers' => $customers,
             'categories' => $categories,
             'filters' => [
-                'search' => $search,
+                'search_customer' => $searchCustomer,
+                'search_category' => $searchCategory,
             ],
         ]);
     }

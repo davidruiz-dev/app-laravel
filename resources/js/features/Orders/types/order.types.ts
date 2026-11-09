@@ -45,6 +45,7 @@ export interface OrdersOverview {
     total_completed: number;
     total_cancelled: number;
     total_pending: number;
+    total_delivered: number;
 }
 
 // Forms

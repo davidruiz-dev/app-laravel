@@ -118,7 +118,7 @@ export function SelectContent({
 
       <div
         role="listbox"
-        className="absolute left-0 top-full z-100 mt-1
+        className="absolute right-0 top-full z-100 mt-1
           w-full rounded-md border border-border
           bg-surface p-1 shadow-lg"
       >

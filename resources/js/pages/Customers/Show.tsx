@@ -8,6 +8,7 @@ import { Order, OrderStatus } from "@/features/Orders/types/order.types";
 import Layout from "@/layouts/Layout";
 import { Paginated } from "@/types";
 import { formatDate, formatDateTime, getRemainingDays } from "@/utils/date";
+import { maskedPhone } from "@/utils/phone.util";
 import { Link, router } from "@inertiajs/react";
 import { Calendar1Icon, Clock, Mail, MessageCircle, PackageOpen, Phone, Trash, } from "lucide-react";
 import { useState } from "react";
@@ -163,7 +164,7 @@ export default function CustomerShow({ customer, orders }: CustomerShowProps) {
 
               <div className="flex flex-wrap gap-2">
                 <a href={`tel:${digits}`} className={contactLink}>
-                  <Phone size={16} /> {customer.phone}
+                  <Phone size={16} /> {maskedPhone(customer.phone)}
                 </a>
                 {customer.email && (
                   <a href={`mailto:${customer.email}`} className={contactLink}>

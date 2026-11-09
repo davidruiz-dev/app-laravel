@@ -1,33 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { router, useForm } from "@inertiajs/react";
-import {
-  Bus,
-  CheckCircle2,
-  Phone,
-  Plus,
-  Save,
-  Search,
-  ShieldCheck,
-  Store,
-  Trash,
-  Truck,
-  User,
-  X,
-} from "lucide-react";
-
+import { CheckCircle2, Phone, Plus, Save, Search, ShieldCheck, Store, Trash, Truck, User, X, } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import { Textarea } from "@/components/Textarea";
 import ItemImagePreview from "@/components/ImagePreview";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/Select";
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/Select";
 import type { Customer } from "@/features/customers/types/customer.types";
 import type { Category } from "@/features/Categories/types/category.types";
 import { Order, OrderStatus } from "../types/order.types";
@@ -80,7 +59,8 @@ type OrderFormData = {
 interface OrderFormProps {
   customers: Customer[];
   categories: Category[];
-  search?: string;
+  searchCustomer?: string;
+  searchCategory?: string;
   order?: Order | null;
   /** Ruta que devuelve la pantalla actual con los resultados del buscador. */
   customerSearchUrl?: string;
@@ -139,7 +119,8 @@ const createInitialData = (order?: Order | null): OrderFormData => ({
 export default function OrderForm({
   customers,
   categories,
-  search = "",
+  searchCustomer = "",
+  searchCategory = "",
   order = null,
   customerSearchUrl = "/orders/create",
   storeUrl = "/orders",
@@ -147,9 +128,9 @@ export default function OrderForm({
 }: OrderFormProps) {
   const isEditing = Boolean(order);
   const form = useForm<OrderFormData>(createInitialData(order));
-  const [searchTerm, setSearchTerm] = useState(search);
+  const [searchTermCustomer, setSearchTermCustomer] = useState(searchCustomer);
+  const [searchTermCategory, setSearchTermCategory] = useState(searchCategory);
   const firstSearchRender = useRef(true);
-
 
   // modals
   const [showModalCancelled, setShowModalCancelled] = useState(false);
@@ -197,13 +178,21 @@ export default function OrderForm({
     const timeout = window.setTimeout(() => {
       router.get(
         customerSearchUrl,
-        { search: searchTerm.trim() || undefined },
-        { preserveState: true, preserveScroll: true, replace: true, only: ["customers", "filters"] },
+        {
+          search_customer: searchTermCustomer.trim() || undefined,
+          search_category: searchTermCategory.trim() || undefined
+        },
+        {
+          preserveState: true,
+          preserveScroll: true,
+          replace: true,
+          only: ["customers", "categories", "filters"]
+        },
       );
     }, 400);
 
     return () => window.clearTimeout(timeout);
-  }, [searchTerm, customerSearchUrl]);
+  }, [searchTermCustomer, searchTermCategory, customerSearchUrl]);
 
   const total = useMemo(
     () => form.data.items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0),
@@ -322,17 +311,21 @@ export default function OrderForm({
                     <SelectContent>
                       <div className="p-1">
                         <Input
-                          value={searchTerm}
+                          value={searchTermCustomer}
                           placeholder="Buscar cliente por nombre o teléfono"
                           leftIcon={<Search size={17} />}
-                          onChange={(event) => setSearchTerm(event.target.value)}
+                          onChange={(event) => setSearchTermCustomer(event.target.value)}
                         />
                       </div>
-                      {customers.map((customer) => (
+                      {customers.length === 0 ? (
+                        <div className="text-center text-sm text-muted p-2">No se han encontrado clientes</div>
+                      ) : (
+                        customers.map((customer) => (
                         <SelectItem key={customer.id} value={String(customer.id)}>
                           {customer.full_name}
                         </SelectItem>
-                      ))}
+                      ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -399,16 +392,33 @@ export default function OrderForm({
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div>
                       <label className="mb-1.5 block text-sm font-medium">Categoría</label>
-                      <Select value={item.category_id} onValueChange={(value) => updateItem(index, "category_id", value)}>
+                      <Select
+                        value={item.category_id}
+                        onValueChange={(value) => updateItem(index, "category_id", value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccionar categoría">
                             {categories.find((category) => String(category.id) === item.category_id)?.name}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={String(category.id)}>{category.name}</SelectItem>
-                          ))}
+                          <div className="p-1">
+                            <Input
+                              value={searchTermCategory}
+                              placeholder="Buscar categoría por nombre"
+                              leftIcon={<Search size={17} />}
+                              onChange={(event) => setSearchTermCategory(event.target.value)}
+                            />
+                          </div>
+                          {categories.length === 0 ? (
+                            <div className="text-center text-sm text-muted p-2">No se han encontrado categorías</div>
+                          ) : (
+                            categories.map((category) => (
+                              <SelectItem key={category.id} value={String(category.id)}>
+                                {category.name}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                       {error(`items.${index}.category_id`) && <p className="mt-1 text-sm text-destructive">{error(`items.${index}.category_id`)}</p>}

@@ -15,10 +15,10 @@ export function OrderStatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`rounded-lg border border-border bg-surface  p-6 ${className}`}
+      className={`rounded border border-border bg-surface p-4 ${className}`}
     >
       <div className="flex items-center justify-between">
-        <span className="text-2xl font-semibold leading-none">
+        <span className="text-xl md:text-2xl font-semibold leading-none">
           {value}
         </span>
 
@@ -31,7 +31,7 @@ export function OrderStatCard({
         </div>
       </div>
 
-      <p className="mt-5 text-md font-normal leading-tight text-muted">
+      <p className="mt-5 text-sm md:text-md font-normal leading-tight text-muted">
         {label}
       </p>
     </div>
