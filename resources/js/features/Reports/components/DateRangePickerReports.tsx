@@ -2,7 +2,6 @@ import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { Filter, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { formatDate } from "@/utils/date";
 import type { DateRange } from "./ReportsFilter";
 
 interface DateRangePickerProps {
@@ -78,7 +77,7 @@ export function DateRangePickerReports({
                     id="startDate"
                     type="date"
                     value={range.startDate}
-                    max={range.endDate || formatDate(new Date().toDateString())}
+                    max={range.endDate || new Date().toISOString().split("T")[0]}
                     onChange={(e) =>
                         updateRange("startDate", e.target.value)
                     }
@@ -90,7 +89,7 @@ export function DateRangePickerReports({
                     type="date"
                     value={range.endDate}
                     min={range.startDate || undefined}
-                    max={formatDate(new Date().toDateString())}
+                    max={new Date().toISOString().split("T")[0]}
                     onChange={(e) =>
                         updateRange("endDate", e.target.value)
                     }
@@ -117,7 +116,7 @@ export function DateRangePickerReports({
                 {initialRange && (
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         onClick={handleClear}
                         className="w-full"
                     >
