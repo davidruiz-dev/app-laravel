@@ -22,7 +22,7 @@ class CustomerController extends Controller
             ->withCount('orders')
             ->addSelect([
                 'last_order' => Orderitem::query()
-                    ->select('order_items.name')
+                    ->select('order_items.product_name')
                     ->join('orders', 'orders.id', '=', 'order_items.order_id')
                     ->whereColumn('orders.customer_id', 'customers.id')
                     ->orderByDesc('orders.created_at')

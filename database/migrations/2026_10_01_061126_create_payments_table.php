@@ -14,13 +14,9 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-
             $table->decimal('amount', 10, 2);
-
             $table->string('method'); // efectivo, yape, plin, transferencia...
             $table->dateTime('paid_at');
-
-            $table->string('type'); // advance, balance
             $table->string('note')->nullable();
             $table->timestamps();
             $table->softDeletes();

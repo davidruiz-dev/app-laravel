@@ -22,7 +22,7 @@ const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const statusStyles: Record<string, string> = {
     pending: "bg-amber-100 text-amber-800 ring-amber-600/20",
     "in_progress": "bg-blue-100 text-blue-800 ring-blue-600/20",
-    completed: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
+    ready: "bg-emerald-100 text-emerald-800 ring-emerald-600/20",
 };
 
 function parseDate(value: string) {
@@ -95,7 +95,7 @@ export default function Calendar({
 
     const ordersByDate = orders.reduce<Record<string, Order[]>>(
         (groups, order) => {
-            const key = order.date.slice(0, 10);
+            const key = order.order_date.slice(0, 10);
             (groups[key] ??= []).push(order);
             return groups;
         },
@@ -145,16 +145,16 @@ export default function Calendar({
                 >
                     <span className="font-semibold">
                         {order.items.map((item, index) => (
-                            <div key={index}>{item.quantity}x {item.name}</div>
+                            <div key={index}>{item.quantity}x {item.product_name}</div>
                         ))}
                     </span>
                     <div className="flex justify-between flex-wrap">
                         {order.customer?.full_name && (
                             <span>{order.customer.full_name}</span>
                         )}
-                        {order.shift && (
+                        {order.delivery_shift && (
                             <div className="flex gap-1 items-center text-xs">
-                                <Clock size={12} className="" /> {order.shift}
+                                <Clock size={12} className="" /> {order.delivery_shift}
                             </div>
                         )}
                     </div>
@@ -324,7 +324,7 @@ export default function Calendar({
                     {[
                         ["pending", "Pendiente"],
                         ["in_progress", "En preparación"],
-                        ["completed", "Completado"],
+                        ["ready", "Completado"],
                     ].map(([status, label]) => (
                         <div key={status} className="flex items-center gap-2">
                             <span
@@ -332,7 +332,7 @@ export default function Calendar({
                                     ? "bg-amber-300"
                                     : status === "in_progress"
                                         ? "bg-blue-300"
-                                        : status === "completed"
+                                        : status === "ready"
                                             ? "bg-emerald-300"
                                             : "bg-red-500"
                                     }`}

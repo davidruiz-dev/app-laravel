@@ -1,6 +1,6 @@
 import Button from "@/components/Button";
 import ThemeToggle from "@/components/theme-toggle";
-import { Link, router, usePage } from "@inertiajs/react";
+import { Head, Link, router, usePage } from "@inertiajs/react";
 import {
     BoxIcon,
     Calendar,
@@ -31,6 +31,7 @@ const items = [
     { url: "/kanban", title: "Tablero", icon: <Kanban className="size-5" /> },
     { url: "/orders", title: "Pedidos", icon: <BoxIcon className="size-5" /> },
     { url: "/customers", title: "Clientes", icon: <Users2Icon className="size-5" /> },
+    { url: "/products", title: "Productos", icon: <BoxIcon className="size-5" /> },
     { url: "/categories", title: "Categorías", icon: <TagIcon className="size-5" /> },
     { url: "/expenses", title: "Gastos", icon: <Wallet className="size-5" /> },
     { url: "/reports", title: "Reportes", icon: <ChartBar className="size-5" /> },
@@ -61,6 +62,7 @@ export default function Layout({ children, title }: Props) {
 
     return (
         <div className="min-h-screen bg-background">
+            <Head title={title}/>
             <FlashMessage />
             {/* Barra superior: solo móvil */}
             <header className="md:hidden fixed top-0 inset-x-0 z-40 h-16

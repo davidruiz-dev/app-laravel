@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
 
+
 class TopCategoriesService
 {
     public function getTopCategories(int $days): array
@@ -19,26 +20,38 @@ class TopCategoriesService
             ->startOfDay();
 
         $baseQuery = DB::table('order_items')
-            ->join(
-                'orders',
-                'orders.id',
-                '=',
-                'order_items.order_id'
-            )
-            ->join(
-                'categories',
-                'categories.id',
-                '=',
-                'order_items.category_id'
-            )
-            // ->where('orders.status', 'Completed')
-            ->whereBetween('orders.created_at', [$start, $end]);
+    ->join(
+        'orders',
+        'orders.id',
+        '=',
+        'order_items.order_id'
+    )
+    ->join(
+        'product_variants',
+        'product_variants.id',
+        '=',
+        'order_items.variant_id'
+    )
+    ->join(
+        'products',
+        'products.id',
+        '=',
+        'product_variants.product_id'
+    )
+    ->join(
+        'categories',
+        'categories.id',
+        '=',
+        'products.category_id'
+    )
+    ->whereBetween('orders.created_at', [$start, $end]);
 
-        // Total de ventas por categoría.
+        // Total de pedidos.
         $totalSales = (clone $baseQuery)
             ->distinct()
             ->count('orders.id');
 
+        // Pedidos por categoría.
         $categories = (clone $baseQuery)
             ->select(
                 'categories.id',

@@ -1,72 +1,108 @@
-import { Category } from "@/features/Categories/types/category.types";
-import { Customer, CustomerFormData } from "@/features/customers/types/customer.types";
-import { Payment, PaymentFormData } from "./expense.types";
-
+import { Customer } from "@/features/customers/types/customer.types";
+import { Payment } from "./expense.types";
+import { Product, ProductVariant } from "@/features/Products/types/product.type";
 
 export const OrderStatus = {
-    PENDING: 'pending',
-    IN_PROGRESS: 'in_progress',
-    COMPLETED: 'completed',
-    DELIVERED: 'delivered',
-    CANCELLED: 'cancelled',
+  PENDING: 'pending',
+  IN_PROGRESS: 'in_progress',
+  READY: 'ready',
+  DELIVERED: 'delivered',
+  CANCELLED: 'cancelled',
 } as const;
 
+export type DeliveryType = 'delivery' | 'pickup';
+export type DeliveryShift = 'morning' | 'afternoon';
 
 export interface Order {
-    id: number;
-    customer_id: number;
-    customer?: Customer;
-    total: number;
-    status: OrderStatus
-    date: string;
-    shift: string;
-    delivery: boolean;
-    delivery_address: string;
-    items: OrderItem[];
-    payments: Payment[];
+  id: number;
+  customer_id: number;
+  customer?: Customer;
+  status: OrderStatus
+
+  order_date: string;
+  delivery_shift: DeliveryShift;
+  delivery_type: DeliveryType;
+  delivery_address: string;
+  delivered_at: string;
+
+  subtotal: number;
+  discount: number;
+  total: number;
+
+  items: OrderItem[];
+  payments: Payment[];
+
+  created_at: string;
+  updated_at: string
 }
 export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 
 export interface OrderItem {
-    id: number;
-    category_id: string;
-    category: Category;
-    name: string;
-    description: string;
-    quantity: number;
-    subtotal: number;
-    customization: string;
-    image_url: string;
-    image_public_id: string;
+  id: number;
+  product?: Product;
+  variant_id: number;
+  variant?: ProductVariant;
+  product_variant?: ProductVariant;
+  product_name: string;
+  variant_name: string;
+  quantity: number;
+  unit_price: string
+  line_total: number;
+  details: string;
+  reference_image_url: string;
+  reference_image_public_id: string;
 }
 
 export interface OrdersOverview {
-    total_in_progress: number;
-    total_completed: number;
-    total_cancelled: number;
-    total_pending: number;
-    total_delivered: number;
+  total_in_progress: number;
+  total_completed: number;
+  total_cancelled: number;
+  total_pending: number;
+  total_delivered: number;
 }
 
 // Forms
-export interface OrderFormData {
-    customer_id: string,
-    date: string,
-    shift: string,
-    delivery: boolean,
-    delivery_address: string,
-    total: number,
-    items: OrderItemFormData[];
-    payments: PaymentFormData[];
-    customer?: CustomerFormData | null;
-}
+export type PaymentMethod = "yape" | "plin" | "transferencia" | "efectivo" | "otro";
 
 export interface OrderItemFormData {
-    category_id: string
-    name: string
-    description: string
-    quantity: number
-    subtotal: number;
-    customization: string
-    image: File | null
+    id?: number;
+    _key: string;
+    product_id: number | null; // Solo frontend
+    variant_id: number | null;
+    quantity: number;
+    unit_price: string | number;
+    line_total: string | number; // Solo cálculo frontend
+    details: string;
+    image: File | null;
+    image_url: string | null;
+    remove_image: boolean;
 }
+export type OrderPaymentFormData = {
+  amount: string;
+  method: PaymentMethod;
+  paid_at: string;
+};
+
+export type NewCustomerFormData = {
+  full_name: string;
+  phone: string;
+} | null;
+
+export type OrderFormData = {
+  customer_id: string;
+
+  order_date: string;
+  delivery_shift: DeliveryShift;
+  delivery_type: DeliveryType;
+  delivery_address: string;
+  delivered_at: string;
+
+  subtotal: number;
+  discount: number;
+  total: number;
+
+  items: OrderItemFormData[];
+  // Solo pagos nuevos que se registrarán al crear/actualizar el pedido.
+  payments: OrderPaymentFormData[];
+  customer: NewCustomerFormData;
+};

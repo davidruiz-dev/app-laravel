@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\Expense;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -14,6 +16,7 @@ use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class OrderController extends Controller
@@ -24,7 +27,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $perPage = $request->integer('per_page', 10);
-        $query = Order::with('customer', 'items.category', 'payments')
+        $query = Order::with('customer', 'items.variant', 'payments')
             ->when($request->status, function ($query, $status) {
                 $query->where('status', 'like', "%{$status}%");
             })
@@ -47,7 +50,7 @@ class OrderController extends Controller
 
         $ordersPending = Order::where('status', 'pending')->count();
         $ordersInProgress = Order::where('status', 'in_progress')->count();
-        $ordersCompleted = Order::where('status', 'completed')->count();
+        $ordersCompleted = Order::where('status', 'ready')->count();
         $ordersDelivered = Order::where('status', 'delivered')->count();
         $ordersCancelled = Order::where('status', 'cancelled')->count();
 
@@ -72,7 +75,7 @@ class OrderController extends Controller
 
     public function Kanban()
     {
-        $orders = Order::with('customer', 'items.category', 'payments')->whereIn('status', ['pending', 'in_progress', 'completed'])->orderBy('created_at')->get();
+        $orders = Order::with('customer', 'items.variant', 'payments')->whereIn('status', ['pending', 'in_progress', 'ready'])->orderBy('created_at')->get();
         return Inertia::render('Orders/OrdersKanban', [
             'orders' => $orders,
         ]);
@@ -87,7 +90,7 @@ class OrderController extends Controller
 
     public function MarkAsCompleted(Order $order)
     {
-        $order->update(['status' => 'completed']);
+        $order->update(['status' => 'ready']);
         return redirect()->back()->with('success', 'Pedido marcado como "Completado".');
     }
 
@@ -135,7 +138,7 @@ class OrderController extends Controller
                 Rule::in([
                     'pending',
                     'in_progress',
-                    'completed',
+                    'ready',
                     'delivered',
                     'cancelled',
                 ]),
@@ -173,11 +176,11 @@ class OrderController extends Controller
         }
 
         $orders = Order::with('customer', 'items')
-            ->whereBetween('date', [
+            ->whereBetween('order_date', [
                 $start->toDateString(),
                 $end->toDateString(),
             ])
-            ->whereIn('status', ['pending', 'completed', 'in_progress'])
+            ->whereIn('status', ['pending', 'ready', 'in_progress'])
             ->orderBy('date')
             ->get();
 
@@ -199,7 +202,7 @@ class OrderController extends Controller
         ]);
 
         $searchCustomer = trim($validated['search_customer'] ?? '');
-        $searchCategory = trim($validated['search_category'] ?? '');
+        $searchProduct = trim($validated['search_product'] ?? '');
 
         $customers = Customer::query()
             ->when($searchCustomer !== '', function ($query) use ($searchCustomer) {
@@ -212,9 +215,10 @@ class OrderController extends Controller
             ->limit(15)
             ->get(['id', 'full_name', 'phone']);
 
-        $categories = Category::query()
-            ->when($searchCategory !== '', function ($query) use ($searchCategory) {
-                $query->where('name', 'like', "%{$searchCategory}%");
+        $products = Product::query()
+            ->with(['category', 'variants'])
+            ->when($searchProduct !== '', function ($query) use ($searchProduct) {
+                $query->where('name', 'like', "%{$searchProduct}%");
             })
             ->orderBy('name')
             ->limit(15)
@@ -222,19 +226,22 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Create', [
             'customers' => $customers,
-            'categories' => $categories,
+            'products' => $products,
             'filters' => [
                 'search_customer' => $searchCustomer,
-                'search_category' => $searchCategory,
+                'search_product' => $searchProduct,
             ],
         ]);
     }
     /**
      * Store a newly created resource in storage.
      */
+
     public function store(Request $request)
     {
+       Log::info('PASO 1: Entró al store');
         $validated = $request->validate([
+            // Cliente
             'customer_id' => [
                 'required_without:customer',
                 'nullable',
@@ -245,18 +252,34 @@ class OrderController extends Controller
             'customer.full_name' => ['required_with:customer', 'string', 'max:255'],
             'customer.phone' => ['required_with:customer', 'string', 'max:20'],
 
-            'date' => ['required', 'date'],
-            'shift' => ['required', 'string'],
-            'delivery' => ['required'],
-            'delivery_address' => ['nullable', 'string'],
+            // Datos del pedido
+            'order_date' => ['required', 'date'],
+            'delivery_shift' => ['required', 'in:morning,afternoon'],
+            'delivery_type' => ['required', 'in:delivery,pickup'],
+            'delivery_address' => [
+                'nullable',
+                'required_if:delivery_type,delivery',
+                'string',
+                'max:255',
+            ],
 
+            'discount' => ['nullable', 'numeric', 'min:0'],
+
+            // Productos
             'items' => ['required', 'array', 'min:1'],
-            'items.*.category_id' => ['required', 'exists:categories,id'],
-            'items.*.name' => ['required', 'string', 'max:255'],
-            'items.*.description' => ['nullable', 'string'],
-            'items.*.quantity' => ['required', 'numeric', 'min:1'],
-            'items.*.subtotal' => ['required', 'numeric', 'min:0'],
-            'items.*.customization' => ['nullable'],
+
+            'items.*.variant_id' => [
+                'required',
+                'exists:product_variants,id',
+            ],
+
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+
+            // Precio final acordado por unidad
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+
+            // Descripción de personalizaciones
+            'items.*.details' => ['nullable', 'string'],
 
             'items.*.image' => [
                 'nullable',
@@ -265,54 +288,59 @@ class OrderController extends Controller
                 'max:5120',
             ],
 
+            // Pagos
             'payments' => ['nullable', 'array'],
             'payments.*.amount' => ['required', 'numeric', 'min:0'],
             'payments.*.method' => ['required', 'string'],
-            'payments.*.type' => ['required', 'string'],
             'payments.*.note' => ['nullable', 'string'],
             'payments.*.paid_at' => ['required', 'date'],
         ]);
 
+        Log::info('PASO 2: Validación completada', [
+        'items' => count($validated['items']),
+    ]);
         $cloudinary = new Cloudinary(
             config('cloudinary.cloud_url')
         );
+
         $uploadedImages = [];
 
         try {
-            // Subir las imágenes antes de iniciar la transacción.
+            // 1. Subir imágenes a Cloudinary
             foreach ($validated['items'] as $index => $item) {
+                 Log::info("PASO 3: Procesando imagen {$index}");
                 $file = $request->file("items.$index.image");
 
                 if (!$file) {
                     continue;
                 }
 
+                Log::info("PASO 4: Subiendo imagen {$index}");
                 $result = $cloudinary->uploadApi()->upload(
                     $file->getRealPath(),
                     [
                         'folder' => 'my-app/order-items',
-                    ],
+                    ]
                 );
+                Log::info("PASO 5: Imagen subida {$index}");
 
                 $uploadedImages[$index] = [
-                    'image_url' => $result['secure_url'],
-                    'image_public_id' => $result['public_id'],
+                    'reference_image_url' => $result['secure_url'],
+                    'reference_image_public_id' => $result['public_id'],
                 ];
             }
 
+            Log::info('PASO 6: Antes de la transacción');
+            // 2. Registrar pedido y sus relaciones
             DB::transaction(function () use (
                 $validated,
                 $uploadedImages
             ) {
-
-                // 1. Obtener o crear el cliente
+                Log::info('PASO 7: Dentro de la transacción');
+                // Obtener o crear cliente
                 if (!empty($validated['customer_id'])) {
-
-                    // Cliente existente
                     $customerId = $validated['customer_id'];
                 } else {
-
-                    // Crear nuevo cliente
                     $customer = Customer::create([
                         'full_name' => $validated['customer']['full_name'],
                         'phone' => $validated['customer']['phone'],
@@ -321,65 +349,99 @@ class OrderController extends Controller
                     $customerId = $customer->id;
                 }
 
-                // 2. Calcular total del pedido
-                $total = collect($validated['items'])->sum(
-                    fn($item) => (float) $item['subtotal']
+                // Calcular subtotal en el servidor
+                $subtotal = collect($validated['items'])->sum(
+                    fn($item) =>
+                    (float) $item['unit_price'] * (int) $item['quantity']
                 );
 
-                // 3. Crear pedido
-                $order = Order::create([
-                    'customer_id' => $customerId,
-                    'total' => $total,
-                    'status' => 'pending',
-                    'date' => $validated['date'],
-                    'shift' => $validated['shift'],
-                    'delivery' => $validated['delivery'],
-                    'delivery_address' =>
-                    $validated['delivery_address'] ?? null,
-                ]);
+                $subtotal = round($subtotal, 2);
 
-                // 4. Registrar productos del pedido
-                foreach ($validated['items'] as $index => $item) {
+                $discount = round((float) ($validated['discount'] ?? 0), 2);
 
-                    $order->items()->create([
-                        'category_id' => $item['category_id'],
-                        'name' => $item['name'],
-                        'description' => $item['description'] ?? null,
-                        'quantity' => $item['quantity'],
-                        'subtotal' => $item['subtotal'],
-                        'customization' => $item['customization'] ?? null,
-
-                        'image_url' =>
-                        $uploadedImages[$index]['image_url'] ?? null,
-
-                        'image_public_id' =>
-                        $uploadedImages[$index]['image_public_id'] ?? null,
+                if ($discount > $subtotal) {
+                    throw ValidationException::withMessages([
+                        'discount' => 'El descuento no puede superar el subtotal.',
                     ]);
                 }
 
-                // 5. Registrar pagos
-                foreach ($validated['payments'] ?? [] as $payment) {
+                $total = round($subtotal - $discount, 2);
 
+                // Crear pedido
+                $order = Order::create([
+                    'customer_id' => $customerId,
+                    'status' => 'pending',
+                    'order_date' => $validated['order_date'],
+                    'delivery_shift' => $validated['delivery_shift'],
+                    'delivery_type' => $validated['delivery_type'],
+                    'delivery_address' => $validated['delivery_address'] ?? null,
+                    'subtotal' => $subtotal,
+                    'discount' => $discount,
+                    'total' => $total,
+                ]);
+
+                // Registrar productos
+                foreach ($validated['items'] as $index => $item) {
+                    // Obtener los datos actuales de la variante y su producto
+                    $variant = ProductVariant::with('product')
+                        ->findOrFail($item['variant_id']);
+
+                    $variantName = collect($variant->attributes)
+                        ->map(fn($value, $key) => ucfirst($key) . ': ' . $value)
+                        ->implode(', ');
+
+                    $order->items()->create([
+                        'variant_id' => $variant->id,
+
+                        // Guardar nombres históricos
+                        'product_name' => $variant->product->name,
+                        'variant_name' => $variantName,
+
+                        'quantity' => $item['quantity'],
+
+                        // Precio final acordado, no necesariamente
+                        // igual al precio actual del catálogo
+                        'unit_price' => $item['unit_price'],
+
+                        // Información de personalización
+                        'details' => $item['details'] ?? null,
+
+                        // Imagen de referencia
+                        'reference_image_url' =>
+                        $uploadedImages[$index]['reference_image_url'] ?? null,
+
+                        'reference_image_public_id' =>
+                        $uploadedImages[$index]['reference_image_public_id'] ?? null,
+                    ]);
+                }
+
+                // Registrar pagos
+                foreach ($validated['payments'] ?? [] as $payment) {
                     $order->payments()->create([
                         'amount' => $payment['amount'],
                         'method' => $payment['method'],
-                        'type' => $payment['type'],
                         'note' => $payment['note'] ?? null,
                         'paid_at' => $payment['paid_at'],
                     ]);
                 }
+
+                Log::info('PASO 8: Transacción completada');
             });
+            Log::info('PASO 9: Después de la transacción');
         } catch (Throwable $e) {
-            // Eliminar las imágenes subidas si falla el proceso.
+            // Eliminar imágenes si falla el registro
             foreach ($uploadedImages as $image) {
                 try {
                     $cloudinary->uploadApi()->destroy(
-                        $image['image_public_id']
+                        $image['reference_image_public_id']
                     );
                 } catch (Throwable $cleanupError) {
                     Log::error(
                         'No se pudo eliminar una imagen de Cloudinary.',
-                        ['public_id' => $image['image_public_id']]
+                        [
+                            'public_id' => $image['reference_image_public_id'],
+                            'error' => $cleanupError->getMessage(),
+                        ]
                     );
                 }
             }
@@ -393,13 +455,12 @@ class OrderController extends Controller
     }
 
 
-
     /**
      * Display the specified resource.
      */
     public function show(Order $order)
     {
-        $order->load('items.category')->load('customer')->load('payments');
+        $order->load('items.variant.product.category')->load('customer')->load('payments');
         return Inertia::render('Orders/Show', [
             'order' => $order,
         ]);
@@ -449,21 +510,6 @@ class OrderController extends Controller
     public function update(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'customer_id' => [
-                'required_without:customer',
-                'nullable',
-                'exists:customers,id',
-            ],
-
-            'customer' => ['nullable', 'array'],
-            'customer.full_name' => ['required_with:customer', 'string', 'max:255'],
-            'customer.phone' => ['required_with:customer', 'string', 'max:20'],
-
-            'date' => ['required', 'date'],
-            'shift' => ['required', 'string'],
-            'delivery' => ['required'],
-            'delivery_address' => ['nullable', 'string'],
-
             'items' => ['required', 'array', 'min:1'],
 
             'items.*.id' => [
@@ -473,12 +519,16 @@ class OrderController extends Controller
                     ->where('order_id', $order->id),
             ],
 
-            'items.*.category_id' => ['required', 'exists:categories,id'],
-            'items.*.name' => ['required', 'string', 'max:255'],
-            'items.*.description' => ['nullable', 'string'],
-            'items.*.quantity' => ['required', 'numeric', 'min:1'],
-            'items.*.subtotal' => ['required', 'numeric', 'min:0'],
-            'items.*.customization' => ['nullable'],
+            'items.*.variant_id' => [
+                'required',
+                'exists:product_variants,id',
+            ],
+
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+
+            'items.*.details' => ['nullable', 'string'],
 
             'items.*.image' => [
                 'nullable',
@@ -582,9 +632,9 @@ class OrderController extends Controller
                     }
 
                     $orderItem->fill([
-                        'category_id' => $item['category_id'],
+                        'variant_id' => $item['variant_id'],
                         'name' => $item['name'],
-                        'description' => $item['description'] ?? null,
+                        'details' => $item['details'] ?? null,
                         'quantity' => $item['quantity'],
                         'subtotal' => $item['subtotal'],
                         'customization' => $item['customization'] ?? null,

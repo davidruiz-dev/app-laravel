@@ -4,37 +4,48 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
-    use SoftDeletes;
     protected $table = 'order_items';
     
     protected $fillable = [
         'order_id',
-        'category_id',
-        'name',
-        'description',
+        'variant_id',
+        'product_name',
+        'variant_name',
         'quantity',
-        'subtotal',
-        'customization',
-        'image_url',
-        'image_public_id',
-
+        'unit_price',
+        'details',
+        'reference_image_url',
+        'reference_image_public_id',
     ];
 
     protected $casts = [
-        'customization' => 'array',
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:2',
+        'line_total' => 'decimal:2',
     ];
+
+    protected $guarded = ['line_total'];
 
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
-    public function category(): BelongsTo
+    public function product(): BelongsTo
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Product::class);
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
+    public function getIsPricedAttribute(): bool
+    {
+        return $this->unit_price !== null;
     }
 }

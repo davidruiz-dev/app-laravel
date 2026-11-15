@@ -16,7 +16,7 @@ const columns = [
         title: 'En preparación',
     },
     {
-        status: 'completed',
+        status: 'ready',
         title: 'Listo para entregar',
     },
 ];

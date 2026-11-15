@@ -15,10 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('full_name');
             $table->string('email')->unique()->nullable();
-            $table->string('social_network')->nullable();
             $table->string('phone')->nullable();
+            $table->string('social_network')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

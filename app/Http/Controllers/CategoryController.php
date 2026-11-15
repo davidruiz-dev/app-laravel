@@ -21,7 +21,6 @@ class CategoryController extends Controller
                 $query->where('name', 'like', "%{$search}%");
             })
             ->latest()
-            ->withCount('orderItems')
             ->paginate($perPage)
             ->withQueryString();
 

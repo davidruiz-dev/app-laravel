@@ -15,7 +15,7 @@ import { useState } from "react";
 const STATUS_ACTIONS: Partial<Record<OrderStatus, string>> = {
     [OrderStatus.PENDING]: 'Iniciar producción',
     [OrderStatus.IN_PROGRESS]: 'Pedido listo',
-    [OrderStatus.COMPLETED]: 'Entregar pedido',
+    [OrderStatus.READY]: 'Entregar pedido',
 };
 
 const formatMoney = (value: number) => formatCurrency(value);
@@ -43,14 +43,14 @@ function InfoRow({
 function OrderItemRow({ item }: { item: OrderItem }) {
     const unitPrice =
         item.quantity > 0
-            ? Number(item.subtotal) / Number(item.quantity)
-            : Number(item.subtotal);
+            ? Number(item.line_total) / Number(item.quantity)
+            : Number(item.line_total);
 
     const openImage = () => {
-        if (!item.image_url) return;
+        if (!item.reference_image_url) return;
 
         window.open(
-            item.image_url,
+            item.reference_image_url,
             '_blank',
             'noopener,noreferrer'
         );
@@ -58,16 +58,16 @@ function OrderItemRow({ item }: { item: OrderItem }) {
 
     return (
         <li className="flex gap-4 py-4 first:pt-0 last:pb-0">
-            {item.image_url ? (
+            {item.reference_image_url ? (
                 <button
                     type="button"
                     onClick={openImage}
-                    aria-label={`Ver imagen de ${item.name}`}
+                    aria-label={`Ver imagen de ${item.variant_name}`}
                     className="shrink-0"
                 >
                     <img
-                        src={item.image_url}
-                        alt={item.name}
+                        src={item.reference_image_url}
+                        alt={item.variant_name}
                         loading="lazy"
                         decoding="async"
                         className="size-20 rounded-lg border border-gray-200 object-cover sm:size-24"
@@ -83,28 +83,29 @@ function OrderItemRow({ item }: { item: OrderItem }) {
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <h3 className="truncate text-base font-semibold text-foreground">
-                            {item.name}
+                            {item.product_name} 
                         </h3>
-
-                        {item.category?.name && (
+                        <p className="text-muted text-sm">{item.variant_name}</p>
+                        
+                        {item.variant?.product?.category?.name && (
                             <span className="mt-0.5 inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                                {item.category.name}
+                                {item.variant?.product.category?.name}
                             </span>
                         )}
                     </div>
 
                     <p className="shrink-0 text-base font-semibold text-foreground">
-                        {formatMoney(Number(item.subtotal))}
+                        {formatMoney(Number(item.line_total))}
                     </p>
                 </div>
 
-                {item.description && (
+                {item.details && (
                     <p className="text-sm text-muted">
-                        {item.description}
+                        {item.details}
                     </p>
                 )}
 
-                {item.customization && (
+                {/* {item.customization && (
                     <div className="mt-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
                         <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
                             Personalización
@@ -113,7 +114,7 @@ function OrderItemRow({ item }: { item: OrderItem }) {
                             {item.customization}
                         </p>
                     </div>
-                )}
+                )} */}
 
                 <p className="mt-auto pt-1 text-xs text-muted">
                     {item.quantity} x {formatMoney(unitPrice)}
@@ -202,7 +203,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                 updateStatus(`/orders/${order.id}/complete`);
                 break;
 
-            case OrderStatus.COMPLETED:
+            case OrderStatus.READY:
                 updateStatus(`/orders/${order.id}/delivered`);
                 break;
 
@@ -229,12 +230,12 @@ export default function ShowOrder({ order }: ShowOrderProps) {
                         <div className="flex flex-wrap items-center gap-7 text-sm text-muted">
                             <div className="flex items-center gap-1">
                                 <Calendar size={15} />
-                                Entrega: {formatDate(order.date)}
+                                Entrega: {formatDate(order.order_date)}
                             </div>
 
                             <div className="flex items-center gap-1">
                                 <Clock size={15} />
-                                Turno {order.shift}
+                                Turno {order.delivery_shift}
                             </div>
                         </div>
                     </div>

@@ -13,24 +13,23 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')
-                ->constrained('customers')
-                ->cascadeOnDelete();
-            $table->decimal('total', 10, 2)->default(0);
+            $table->foreignId('customer_id')->constrained('customers');
             $table->enum('status', [
                 'pending',
                 'in_progress',
                 'cancelled',
-                'completed',
+                'ready',
                 'delivered',
             ])->default('pending');
-            $table->date('date');
-            $table->string('shift');
-            $table->boolean('delivery')->default(false);
+            $table->date('order_date');
+            $table->enum('delivery_shift', ['morning', 'afternoon']);
+            $table->enum('delivery_type', ['delivery', 'pickup']);
             $table->string('delivery_address')->nullable();
-
+            $table->dateTime('delivered_at')->nullable();
+            $table->decimal('subtotal', 10, 2)->default(0);
+            $table->decimal('discount', 10, 2)->default(0);
+            $table->decimal('total', 10, 2)->default(0);
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

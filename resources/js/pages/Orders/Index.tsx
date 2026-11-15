@@ -111,7 +111,7 @@ export default function Index({ orders, overview, filters }: Props) {
             <h1 className='text-2xl md:text-3xl font-bold'>Pedidos</h1>
             <p className='text-muted text-sm md:text-base'>Toda la lista de pedidos registrados en el sistema.</p>
           </div>
-          <Link href={'/orders/create'}>
+          <Link href={'/orders/create'} className="fixed bottom-6 right-6 z-50 md:static">
             <Button size="md">
               <PlusIcon className='size-5' />
               <span className='hidden md:block'>Nuevo pedido</span>
@@ -166,10 +166,10 @@ export default function Index({ orders, overview, filters }: Props) {
                   <TableCell>{order.customer?.full_name}</TableCell>
                   <TableCell>
                     <div className='flex items-center gap-3'>
-                      {formatDate(order.date)} {order.shift && (
+                      {formatDate(order.order_date)} {order.delivery_shift && (
                         <div className='flex items-center gap-1 text-sm'>
                           <Clock size={17} />
-                          <span>{order.shift}</span>
+                          <span>{order.delivery_shift}</span>
                         </div>
                       )}
                     </div>

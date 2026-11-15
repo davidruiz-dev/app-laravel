@@ -41,7 +41,7 @@ export default function TablePagination<T>({
                 {/* Info + per page */}
                 {onPerPageChange && (
                     <div className="flex items-center gap-2">
-                        <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400">Filas por página:</span>
+                        <span className="hidden md:block text-sm text-gray-600 dark:text-gray-400">Por página:</span>
                         <select
                             value={String(per_page)}
                             onChange={(e) => onPerPageChange(Number(e.target.value))}

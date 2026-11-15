@@ -91,23 +91,26 @@ class ReportController extends Controller
         })->values();
 
         // Ingresos por categoría
-        $categoryIncome = DB::table('order_items')
-            ->join('categories', 'categories.id', '=', 'order_items.category_id')
-            ->join('orders', 'orders.id', '=', 'order_items.order_id')
-            ->selectRaw('
-            categories.id,
-            categories.name as category,
-            SUM(order_items.subtotal) as total
-        ')
-            ->whereBetween('orders.created_at', [$startDate, $endDate])
-            ->where('orders.status', '!=', 'cancelled')
-            ->groupBy('categories.id', 'categories.name')
-            ->orderByDesc('total')
-            ->get()
-            ->map(fn($item) => [
-                'category' => $item->category,
-                'total' => (float) $item->total,
-            ]);
+        // Ingresos por categoría
+$categoryIncome = DB::table('order_items')
+    ->join('product_variants', 'product_variants.id', '=', 'order_items.variant_id')
+    ->join('products', 'products.id', '=', 'product_variants.product_id')
+    ->join('categories', 'categories.id', '=', 'products.category_id')
+    ->join('orders', 'orders.id', '=', 'order_items.order_id')
+    ->selectRaw('
+        categories.id,
+        categories.name as category,
+        SUM(order_items.quantity * order_items.unit_price) as total
+    ')
+    ->whereBetween('orders.created_at', [$startDate, $endDate])
+    ->where('orders.status', '!=', 'cancelled')
+    ->groupBy('categories.id', 'categories.name')
+    ->orderByDesc('total')
+    ->get()
+    ->map(fn($item) => [
+        'category' => $item->category,
+        'total' => (float) $item->total,
+    ]);
 
         // Clientes nuevos
         $newCustomers = Customer::query()

@@ -6,6 +6,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -21,7 +22,9 @@ Route::middleware('guest')->group(function () {
         ->name('login.store');
 });
 
-
+Route::fallback(function () {
+    return redirect('/login');
+});
 
 Route::middleware('auth')->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
@@ -53,6 +56,7 @@ Route::middleware('auth')->group(function () {
     // Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('expenses', ExpenseController::class);
+    Route::resource('products', ProductController::class);
     Route::resource('reports', ReportController::class);
 
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');

@@ -2,17 +2,18 @@ import Layout from "@/layouts/Layout";
 import { Customer } from "@/features/customers/types/customer.types";
 import { Category } from "@/features/Categories/types/category.types";
 import OrderForm from "../../features/Orders/components/OrderForm";
+import { Product } from "@/features/Products/types/product.type";
 
 interface Props {
   customers: Customer[];
-  categories: Category[];
+  products: Product[];
   filters: {
     search_customer?: string;
-    search_category?: string;
+    search_product?: string;
   };
 }
 
-export default function Create({ customers, categories, filters }: Props) {
+export default function Create({ customers, products, filters }: Props) {
   return (
     <Layout title="Nuevo pedido">
       <div className="w-full space-y-4">
@@ -20,8 +21,8 @@ export default function Create({ customers, categories, filters }: Props) {
           <h1 className="text-3xl font-semibold">Nuevo pedido</h1>
           <p className="text-muted">Completa los datos requeridos para crear un nuevo pedido.</p>
         </div>
-        <OrderForm customers={customers} categories={categories} searchCustomer={filters.search_customer ?? ''}
-         searchCategory={filters.search_category ?? ''} />
+        <OrderForm customers={customers} products={products} searchCustomer={filters.search_customer ?? ''}
+         searchProduct={filters.search_product ?? ''} />
       </div>
     </Layout>
   )

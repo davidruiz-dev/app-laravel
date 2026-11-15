@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { router, useForm } from "@inertiajs/react";
-import { CheckCircle2, Phone, Plus, Save, Search, ShieldCheck, Store, Trash, Truck, User, X, } from "lucide-react";
+import { Ban, CheckCircle2, Pencil, Phone, Plus, Save, Search, ShieldCheck, Store, Trash, Truck, User, X, } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
@@ -8,59 +8,18 @@ import { Textarea } from "@/components/Textarea";
 import ItemImagePreview from "@/components/ImagePreview";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/Select";
 import type { Customer } from "@/features/customers/types/customer.types";
-import type { Category } from "@/features/Categories/types/category.types";
-import { Order, OrderStatus } from "../types/order.types";
+import { DeliveryShift, DeliveryType, Order, OrderFormData, OrderItemFormData, OrderPaymentFormData, OrderStatus, PaymentMethod } from "../types/order.types";
 import Modal from "@/components/Modal";
 import { orderStatusTypeLabels } from "@/utils/order.util";
-
-type PaymentMethod = "yape" | "plin" | "transferencia" | "efectivo" | "otro";
-type PaymentType = "advance" | "balance";
-
-type OrderItemFormData = {
-  id?: number;
-  _key: string;
-  category_id: string;
-  name: string;
-  description: string;
-  quantity: number;
-  subtotal: string;
-  customization: string;
-  image: File | null;
-  image_url: string | null;
-  remove_image: boolean;
-};
-
-type OrderPaymentFormData = {
-  amount: string;
-  method: PaymentMethod;
-  type: PaymentType;
-  paid_at: string;
-};
-
-type NewCustomerFormData = {
-  full_name: string;
-  phone: string;
-} | null;
-
-type OrderFormData = {
-  customer_id: string;
-  date: string;
-  shift: string;
-  delivery: boolean;
-  delivery_address: string;
-  total: number;
-  items: OrderItemFormData[];
-  // Solo pagos nuevos que se registrarán al crear/actualizar el pedido.
-  payments: OrderPaymentFormData[];
-  customer: NewCustomerFormData;
-};
-
+import { Product, ProductVariant } from "@/features/Products/types/product.type";
+import { Field } from "@/components/Field";
+import { VariantCard } from "@/pages/Products/Show";
 
 interface OrderFormProps {
   customers: Customer[];
-  categories: Category[];
+  products: Product[];
   searchCustomer?: string;
-  searchCategory?: string;
+  searchProduct?: string;
   order?: Order | null;
   /** Ruta que devuelve la pantalla actual con los resultados del buscador. */
   customerSearchUrl?: string;
@@ -78,37 +37,40 @@ const localDateTime = () => {
 
 const createEmptyItem = (): OrderItemFormData => ({
   _key: crypto.randomUUID(),
-  category_id: "",
-  name: "",
-  description: "",
+  variant_id: null,
   quantity: 1,
-  subtotal: "",
-  customization: "",
+  unit_price: "",
+  line_total: "",
+  details: "",
   image: null,
   image_url: null,
   remove_image: false,
+  product_id: null,
 });
 
 const createInitialData = (order?: Order | null): OrderFormData => ({
   customer_id: order?.customer_id ? String(order.customer_id) : "",
-  date: order?.date ?? "",
-  shift: order?.shift ?? "",
-  delivery: order?.delivery ?? false,
+  order_date: order?.order_date ?? "",
+  delivery_shift: order?.delivery_shift ?? "morning",
+  delivery_type: order?.delivery_type ?? 'delivery',
   delivery_address: order?.delivery_address ?? "",
+  delivered_at: order?.delivered_at ?? "",
   total: Number(order?.total ?? 0),
+  subtotal: order?.subtotal ?? 0,
+  discount: order?.discount ?? 0,
   items:
     order?.items?.length
       ? order.items.map((item) => ({
         id: item.id,
         _key: crypto.randomUUID(),
-        category_id: String(item.category_id),
-        name: item.name,
-        description: item.description ?? "",
+        product_id: item.variant?.product_id ?? null,
+        variant_id: item.variant_id,
         quantity: Number(item.quantity),
-        subtotal: item.subtotal.toString(),
-        customization: item.customization ?? "",
+        unit_price: item.unit_price,
+        line_total: item.line_total.toString(),
+        details: item.details ?? "",
         image: null,
-        image_url: item.image_url ?? null,
+        image_url: item.reference_image_url ?? null,
         remove_image: false,
       }))
       : [createEmptyItem()],
@@ -118,9 +80,9 @@ const createInitialData = (order?: Order | null): OrderFormData => ({
 
 export default function OrderForm({
   customers,
-  categories,
+  products,
   searchCustomer = "",
-  searchCategory = "",
+  searchProduct = "",
   order = null,
   customerSearchUrl = "/orders/create",
   storeUrl = "/orders",
@@ -129,7 +91,7 @@ export default function OrderForm({
   const isEditing = Boolean(order);
   const form = useForm<OrderFormData>(createInitialData(order));
   const [searchTermCustomer, setSearchTermCustomer] = useState(searchCustomer);
-  const [searchTermCategory, setSearchTermCategory] = useState(searchCategory);
+  const [searchTermProduct, setSearchTermProduct] = useState(searchProduct);
   const firstSearchRender = useRef(true);
 
   // modals
@@ -143,9 +105,7 @@ export default function OrderForm({
         console.log('Antes de cerrar:', showModalCancelled);
         setShowModalCancelled(false);
       },
-      onFinish: () => {
-        console.log('Petición finalizada');
-      },
+      
     });
   };
 
@@ -157,6 +117,9 @@ export default function OrderForm({
       },
       onError: (errors) => {
         console.log(errors);
+      },
+      onFinish: () => {
+          console.log("Solicitud finalizada");
       },
     });
   };
@@ -180,22 +143,26 @@ export default function OrderForm({
         customerSearchUrl,
         {
           search_customer: searchTermCustomer.trim() || undefined,
-          search_category: searchTermCategory.trim() || undefined
+          search_product: searchTermProduct.trim() || undefined
         },
         {
           preserveState: true,
           preserveScroll: true,
           replace: true,
-          only: ["customers", "categories", "filters"]
+          only: ["customers", "products", "filters"]
         },
       );
     }, 400);
-
     return () => window.clearTimeout(timeout);
-  }, [searchTermCustomer, searchTermCategory, customerSearchUrl]);
+  }, [searchTermCustomer, searchTermProduct, customerSearchUrl]);
 
   const total = useMemo(
-    () => form.data.items.reduce((sum, item) => sum + Number(item.subtotal || 0), 0),
+    () =>
+      form.data.items.reduce(
+        (sum, item) =>
+          sum + Number(item.quantity || 0) * Number(item.unit_price || 0),
+        0
+      ),
     [form.data.items],
   );
 
@@ -212,7 +179,21 @@ export default function OrderForm({
     value: OrderItemFormData[K],
   ) => {
     const items = [...form.data.items];
-    items[index] = { ...items[index], [field]: value };
+
+    const updatedItem = {
+      ...items[index],
+      [field]: value,
+    };
+
+    if (field === "quantity" || field === "unit_price") {
+      updatedItem.line_total = String(
+        Number(updatedItem.quantity || 0) *
+        Number(updatedItem.unit_price || 0)
+      );
+    }
+
+    items[index] = updatedItem;
+
     form.setData("items", items);
   };
 
@@ -249,7 +230,7 @@ export default function OrderForm({
   const addPayment = () => {
     form.setData("payments", [
       ...form.data.payments,
-      { amount: '', method: "yape", type: "advance", paid_at: localDateTime() },
+      { amount: '', method: "yape", paid_at: localDateTime() },
     ]);
   };
 
@@ -257,40 +238,68 @@ export default function OrderForm({
     form.setData("payments", form.data.payments.filter((_, i) => i !== index));
   };
 
-  const updateDelivery = (delivery: boolean) => {
+  const updateDelivery = (delivery_type: DeliveryType) => {
     form.setData({
       ...form.data,
-      delivery,
-      delivery_address: delivery ? form.data.delivery_address : "",
+      delivery_type,
+      delivery_address: delivery_type === 'delivery' ? form.data.delivery_address : "",
     });
   };
+
+  const updateVariant = (index: number, variant: ProductVariant) => {
+    const items = [...form.data.items];
+
+    items[index] = {
+      ...items[index],
+      variant_id: variant.id,
+      unit_price: String(variant.price ?? 0),
+      line_total: String(
+        Number(variant.price ?? 0) * Number(items[index].quantity || 1)
+      ),
+    };
+
+    form.setData("items", items);
+  };
+
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     // Laravel recibe los archivos como multipart/form-data. Para editar se usa
     // method spoofing (_method=put), compatible con formularios que incluyen archivos.
-    form.transform((data) => ({
-      ...data,
-      customer_id: data.customer ? null : data.customer_id,
-      total,
-      _method: isEditing ? "patch" : undefined,
-    }) as OrderFormData);
+    // form.transform((data) => ({
+    //   ...data,
+    //   customer_id: data.customer ? null : data.customer_id,
+    //   total,
+    //   _method: isEditing ? "patch" : undefined,
+    // }) as OrderFormData);
 
     const url = isEditing ? updateUrl ?? `/orders/${order!.id}` : storeUrl;
 
     form.post(url, {
       forceFormData: true,
       preserveScroll: true,
+
+      onError: (errors) => {
+        console.log("Errores de validación:", errors);
+      },
+
+      onSuccess: () => {
+        console.log("Orden guardada correctamente");
+      },
+      onFinish: () => {
+        console.log('Petición finalizada');
+      },
     });
   };
 
+  const [isPriceEditable, setIsPriceEditable] = useState<boolean>(true);
+
   const error = (key: string) => (form.errors as Record<string, string>)[key];
 
-
   return (
-    <form onSubmit={submit} className="grid grid-cols-12 gap-6">
-      <div className="col-span-12 space-y-6 md:col-span-8">
+    <form onSubmit={submit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-6 ">
         <Card>
           <CardHeader>
             <CardTitle>Información del cliente</CardTitle>
@@ -321,10 +330,10 @@ export default function OrderForm({
                         <div className="text-center text-sm text-muted p-2">No se han encontrado clientes</div>
                       ) : (
                         customers.map((customer) => (
-                        <SelectItem key={customer.id} value={String(customer.id)}>
-                          {customer.full_name}
-                        </SelectItem>
-                      ))
+                          <SelectItem key={customer.id} value={String(customer.id)}>
+                            {customer.full_name}
+                          </SelectItem>
+                        ))
                       )}
                     </SelectContent>
                   </Select>
@@ -378,117 +387,171 @@ export default function OrderForm({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {form.data.items.map((item, index) => (
-                <div key={item._key} className="mb-1.5 space-y-4 rounded-lg border border-border p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-medium">Producto #{index + 1}</h3>
-                    {form.data.items.length > 1 && (
-                      <button type="button" onClick={() => removeItem(index)} aria-label={`Eliminar producto ${index + 1}`}>
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium">Categoría</label>
-                      <Select
-                        value={item.category_id}
-                        onValueChange={(value) => updateItem(index, "category_id", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar categoría">
-                            {categories.find((category) => String(category.id) === item.category_id)?.name}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="p-1">
-                            <Input
-                              value={searchTermCategory}
-                              placeholder="Buscar categoría por nombre"
-                              leftIcon={<Search size={17} />}
-                              onChange={(event) => setSearchTermCategory(event.target.value)}
-                            />
-                          </div>
-                          {categories.length === 0 ? (
-                            <div className="text-center text-sm text-muted p-2">No se han encontrado categorías</div>
-                          ) : (
-                            categories.map((category) => (
-                              <SelectItem key={category.id} value={String(category.id)}>
-                                {category.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {error(`items.${index}.category_id`) && <p className="mt-1 text-sm text-destructive">{error(`items.${index}.category_id`)}</p>}
-                    </div>
-                    <div>
-                      <Input
-                        label="Nombre del producto"
-                        value={item.name}
-                        onChange={(event) => updateItem(index, "name", event.target.value)}
-                        placeholder="Ej. Torta personalizada"
-                      />
-                      {error(`items.${index}.name`) && <p className="mt-1 text-sm text-destructive">{error(`items.${index}.name`)}</p>}
-                    </div>
-                  </div>
-
-                  <Textarea
-                    label="Observaciones"
-                    value={item.description}
-                    onChange={(event) => updateItem(index, "description", event.target.value)}
-                    placeholder="Observaciones del producto..."
-                    rows={3}
-                  />
-
-                  <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
-                    <div className="grid grid-cols-1 gap-4">
-                      <Input
-                        label="Cantidad"
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(event) => updateItem(index, "quantity", Math.max(1, Number(event.target.value)))}
-                      />
-                      <Input
-                        label="Precio"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.subtotal}
-                        onChange={(event) =>
-                          updateItem(index, "subtotal", event.target.value)
-                        }
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium">Imagen de referencia</label>
-                      {item.image_url && !item.remove_image && !item.image && (
-                        <div className="mb-2 space-y-2">
-                          <img src={item.image_url} alt={`Imagen de referencia del producto ${index + 1}`} className="h-32 w-full rounded-md border object-contain" />
-                          <button type="button" className="text-sm text-destructive underline" onClick={() => updateItem(index, "remove_image", true)}>
-                            Eliminar imagen actual
-                          </button>
-                        </div>
-                      )}
-                      {item.remove_image && (
-                        <button type="button" className="mb-2 text-sm underline" onClick={() => updateItem(index, "remove_image", false)}>
-                          Mantener imagen actual
+              {form.data.items.map((item, index) => {
+                const product = products.find((p) => p.id === item.product_id);
+                return (
+                  <div key={item._key} className="mb-1.5 space-y-4 rounded-lg border border-border p-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-medium">Producto #{index + 1}</h3>
+                      {form.data.items.length > 1 && (
+                        <button type="button" onClick={() => removeItem(index)} aria-label={`Eliminar producto ${index + 1}`}>
+                          <X size={16} />
                         </button>
                       )}
-                      <ItemImagePreview
-                        file={item.image}
-                        onChange={(file) => {
-                          const items = [...form.data.items];
-                          items[index] = { ...items[index], image: file, remove_image: file ? false : items[index].remove_image };
-                          form.setData("items", items);
-                        }}
-                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      <Field label="Producto" >
+                        <Select
+                          value={item.product_id ? String(item.product_id) : ""}
+                          onValueChange={(value) => {
+                            const items = [...form.data.items];
+
+                            items[index] = {
+                              ...items[index],
+                              product_id: Number(value),
+                              variant_id: null,
+                              unit_price: "",
+                              line_total: "",
+                            };
+
+                            form.setData("items", items);
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Seleccionar producto">
+                              {products.find((p) => p.id === item.product_id)?.name ?? 'Selecciona un producto'}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="p-1">
+                              <Input
+                                value={searchTermProduct}
+                                placeholder="Buscar productos por nombre"
+                                leftIcon={<Search size={17} />}
+                                onChange={(event) => setSearchTermProduct(event.target.value)}
+                              />
+                            </div>
+                            {products.length === 0 ? (
+                              <div className="text-center text-sm text-muted p-2">No se han encontrado categorías</div>
+                            ) : (
+                              products.map((p) => (
+                                <SelectItem key={p.id} value={String(p.id)}>
+                                  {p.name}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {error(`items.${index}.product_id`) && <p className="mt-1 text-sm text-destructive">{error(`items.${index}.product_id`)}</p>}
+                      </Field>
+
+                      {product && (
+                        product.variants.length === 0 ? (
+                          <div className="py-5 text-center">
+                            <p className="text-sm text-muted">
+                              Este producto no tiene variantes registradas.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 p-4 bg-background border border-border rounded-lg">
+                            <div className="flex justify-between">
+                              <h1>Selecciona una variante</h1>
+                              <span className="text-sm text-muted">{product?.variants.length} variantes</span>
+                            </div>
+                            <div className="grid grid-cols-1 gap-1 sm:grid-cols-3">
+                              {product?.variants.map((v: ProductVariant) => (
+                                <VariantCard
+                                  onClick={() => {
+                                    updateVariant(index, v);
+                                  }}
+                                  active={item.variant_id === (v.id)}
+                                  key={v.id}
+                                  variant={v}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      )}
+
+                      {error(`items.${index}.variant_id`) && (
+    <p className="mt-1 text-sm text-destructive">
+        {error(`items.${index}.variant_id`)}
+    </p>
+)}
+                    </div>
+
+                    <Textarea
+                      label="Observaciones"
+                      value={item.details}
+                      onChange={(event) => updateItem(index, "details", event.target.value)}
+                      placeholder="Observaciones del producto..."
+                      rows={3}
+                    />
+                    {error(`items.${index}.details`) && (
+    <p className="mt-1 text-sm text-destructive">
+        {error(`items.${index}.details`)}
+    </p>
+)}
+
+
+                    <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4">
+                        <Input
+                          label="Cantidad"
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(event) => updateItem(index, "quantity", Math.max(1, Number(event.target.value)))}
+                        />
+
+                        <div className="flex gap-1 items-end">
+                          <Input
+                            label="Precio final (editable)"
+                            type="number"
+                            min="0"
+                            step="1.00"
+                            disabled={isPriceEditable}
+                            value={item.unit_price}
+                            onChange={(event) =>
+                              updateItem(index, "unit_price", event.target.value)
+                            }
+                          />
+                          <Button variant="secondary" type="button" onClick={() => setIsPriceEditable(v => !v)}>
+                            {isPriceEditable ? (<Pencil size={17} />) : (<Ban size={17} />)}
+                          </Button>
+                        </div>
+
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium">Imagen de referencia</label>
+                        {item.image_url && !item.remove_image && !item.image && (
+                          <div className="mb-2 space-y-2">
+                            <img src={item.image_url} alt={`Imagen de referencia del producto ${index + 1}`} className="h-32 w-full rounded-md border object-contain" />
+                            <button type="button" className="text-sm text-destructive underline" onClick={() => updateItem(index, "remove_image", true)}>
+                              Eliminar imagen actual
+                            </button>
+                          </div>
+                        )}
+                        {item.remove_image && (
+                          <button type="button" className="mb-2 text-sm underline" onClick={() => updateItem(index, "remove_image", false)}>
+                            Mantener imagen actual
+                          </button>
+                        )}
+                        <ItemImagePreview
+                          file={item.image}
+                          onChange={(file) => {
+                            const items = [...form.data.items];
+                            items[index] = { ...items[index], image: file, remove_image: file ? false : items[index].remove_image };
+                            form.setData("items", items);
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -500,7 +563,7 @@ export default function OrderForm({
         </Card>
       </div>
 
-      <div className="col-span-12 space-y-6 md:col-span-4">
+      <div className="space-y-6">
         <Card>
           <CardHeader><CardTitle>Fecha y entrega</CardTitle></CardHeader>
           <CardContent>
@@ -510,42 +573,48 @@ export default function OrderForm({
                   label="Fecha de entrega"
                   id="date"
                   type="date"
-                  value={form.data.date}
-                  onChange={(event) => form.setData("date", event.target.value)}
+                  value={form.data.order_date}
+                  onChange={(event) => form.setData("order_date", event.target.value)}
                 />
-                {error("date") && <p className="mt-1 text-sm text-destructive">{error("date")}</p>}
+                {error("order_date") && <p className="mt-1 text-sm text-destructive">{error("order_date")}</p>}
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Horario</label>
-                <Select value={form.data.shift} onValueChange={(value) => form.setData("shift", value)}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona un horario" /></SelectTrigger>
+                <Select value={form.data.delivery_shift} onValueChange={(value) => form.setData("delivery_shift", value as DeliveryShift)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un horario">
+                      {form.data.delivery_shift === 'morning' ? 'Mañana' : 'Tarde'}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="mañana">Mañana</SelectItem>
-                    <SelectItem value="tarde">Tarde</SelectItem>
+                    <SelectItem value={'morning'}>Mañana</SelectItem>
+                    <SelectItem value={'afternoon'}>Tarde</SelectItem>
                   </SelectContent>
                 </Select>
-                {error("shift") && <p className="mt-1 text-sm text-destructive">{error("shift")}</p>}
+                {error("delivery_shift") && <p className="mt-1 text-sm text-destructive">{error("delivery_shift")}</p>}
               </div>
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Tipo de entrega</label>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <button
                     type="button"
-                    onClick={() => updateDelivery(false)}
-                    className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${!form.data.delivery
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                      : "border-border hover:border-primary/50"
+                    onClick={() => updateDelivery('pickup')}
+                    className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 
+                       ${form.data.delivery_type === "pickup"
+                        ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                        : "border-border hover:border-primary/50"
                       }`}
                   >
                     <div className="flex w-full items-center justify-between">
-                      <div className={`rounded-lg p-2 ${!form.data.delivery
+                      <div className={`rounded-lg p-2 ${form.data.delivery_type === "pickup"
                         ? "bg-primary/10 text-primary"
                         : "bg-background text-muted"
                         }`}>
                         <Store size={22} />
                       </div>
 
-                      {!form.data.delivery && (
+                      {form.data.delivery_type && (
                         <CheckCircle2 size={20} className="text-primary" />
                       )}
                     </div>
@@ -559,21 +628,21 @@ export default function OrderForm({
 
                   <button
                     type="button"
-                    onClick={() => updateDelivery(true)}
-                    className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${form.data.delivery
+                    onClick={() => updateDelivery('delivery')}
+                    className={`relative cursor-pointer flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${form.data.delivery_type === 'delivery'
                       ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                       : "border-border hover:border-primary/50 "
                       }`}
                   >
                     <div className="flex w-full items-center justify-between">
-                      <div className={`rounded-lg p-2 ${form.data.delivery
+                      <div className={`rounded-lg p-2 ${form.data.delivery_type === 'delivery'
                         ? "bg-primary/10 text-primary"
                         : "bg-background text-muted"
                         }`}>
                         <Truck size={22} />
                       </div>
 
-                      {form.data.delivery && (
+                      {form.data.delivery_type === 'delivery' && (
                         <CheckCircle2 size={20} className="text-primary" />
                       )}
                     </div>
@@ -584,9 +653,9 @@ export default function OrderForm({
                       </p>
                     </div>
                   </button>
-
+                  {error("delivery_type") && <p className="mt-1 text-sm text-destructive">{error("delivery_type")}</p>}
                 </div>
-                {form.data.delivery === true && (
+                {form.data.delivery_type === 'delivery' && (
                   <div className="mt-4">
                     <Input
                       label="Dirección de entrega"
@@ -621,6 +690,7 @@ export default function OrderForm({
                       value={payment.amount}
                       onChange={(event) => updatePayment(index, "amount", event.target.value)}
                     />
+                    {error(`payments.${index}.amount`)}
                     <div>
                       <label className="mb-2 block text-sm font-medium">Método de pago</label>
                       <Select value={payment.method} onValueChange={(value) => updatePayment(index, "method", value as PaymentMethod)}>
@@ -634,12 +704,14 @@ export default function OrderForm({
                         </SelectContent>
                       </Select>
                     </div>
+                    {error(`payments.${index}.method`)}
                     <Input
                       label="Fecha"
                       type="datetime-local"
                       value={payment.paid_at}
                       onChange={(event) => updatePayment(index, "paid_at", event.target.value)}
                     />
+                    {error(`payments.${index}.paid_at`)}
                   </CardContent>
                 </Card>
               ))}

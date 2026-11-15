@@ -14,15 +14,17 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
-
-            $table->string('name');
-            $table->string('description');
+            $table->foreignId('variant_id')->constrained('product_variants')->restrictOnDelete();
+            $table->string('product_name');
+            $table->string('variant_name');
             $table->unsignedInteger('quantity')->default(1);
-            $table->decimal('subtotal', 10, 2);
-            $table->json('customization')->nullable();
+            $table->decimal('unit_price', 10, 2)->nullable();
+            $table->decimal('line_total', 10, 2)->storedAs('unit_price * quantity')->nullable();
+            $table->text('details')->nullable();
+
+            $table->string('reference_image_url')->nullable();
+            $table->string('reference_image_public_id')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

@@ -86,7 +86,6 @@ export default function Index({ customers, filters }: Props) {
   };
 
 
-
   return (
     <Layout title="Clientes">
       <div className="flex justify-between mb-4 items-center gap-10">
@@ -97,7 +96,7 @@ export default function Index({ customers, filters }: Props) {
           </p>
         </div>
 
-        <Button onClick={handleCreate} size="md">
+        <Button onClick={handleCreate} size="md" className="fixed bottom-6 right-6 z-50 md:static">
           <PlusIcon size={17} />
           <span className="hidden md:block">Nuevo cliente</span>
         </Button>

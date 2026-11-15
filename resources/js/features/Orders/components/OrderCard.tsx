@@ -23,7 +23,7 @@ export function OrderCard({ order }: OrderCardProps) {
             return 'Iniciar producción'
         } else if (order.status === 'in_progress') {
             return 'Pedido listo '
-        } else if (order.status === 'completed') {
+        } else if (order.status === 'ready') {
             return 'Entregar pedido'
         }
     }
@@ -33,7 +33,7 @@ export function OrderCard({ order }: OrderCardProps) {
             markAsInProgress();
         } else if (order.status === 'in_progress') {
             markAsCompleted();
-        } else if (order.status === 'completed') {
+        } else if (order.status === 'ready') {
             markAsDelivered();
         }
     }
@@ -58,9 +58,9 @@ export function OrderCard({ order }: OrderCardProps) {
         <>
             <div className="rounded-lg flex overflow-hidden border border-border">
                 <div className="bg-red-400/90 p-3 flex flex-col items-center gap-1 justify-center text-white border-r border-surface border-dashed">
-                    <span className="text-3xl font-bold">{getDay(order.date)}</span>
-                    <span className="text-xs lowercase">{getMonth(order.date)}</span>
-                    <span className="text-xs">T-{order.shift}</span>
+                    <span className="text-3xl font-bold">{getDay(order.order_date)}</span>
+                    <span className="text-xs lowercase">{getMonth(order.order_date)}</span>
+                    <span className="text-xs">T-{order.delivery_shift}</span>
                 </div>
 
                 <div className="p-3 bg-background flex-1 space-y-3">
@@ -76,7 +76,7 @@ export function OrderCard({ order }: OrderCardProps) {
 
                     {order.items.map(item => (
                         <div key={item.id} className="text-sm">
-                            {item.quantity}× {item.name}
+                            {item.quantity}× {item.product_name}
                         </div>
                     ))}
 
@@ -119,14 +119,14 @@ export function OrderCard({ order }: OrderCardProps) {
 
                     <div>
                         <h1 className="font-semibold">Fecha de entrega</h1>
-                        <p className="text-muted">{formatDate(order.date)} - Turno {order.shift}</p>
+                        <p className="text-muted">{formatDate(order.order_date)} - Turno {order.delivery_shift}</p>
                     </div>
 
                     <div className="border border-border rounded-md divide-y divide-border text-sm">
                         {order.items.map((item) => (
                             <div key={item.id} className="flex justify-between p-3">
-                                <span>{item.quantity}x {item.name}</span>
-                                <span>S/{(item.subtotal)}</span>
+                                <span>{item.quantity}x {item.product_name}</span>
+                                <span>S/{(item.line_total)}</span>
                             </div>
                         ))}
                         <div className="flex justify-between p-3">

@@ -56,6 +56,22 @@ export default function ExpenseForm({ expense, onClose }: Props) {
                     </p>
                 )}
             </div>
+            <div>
+                <Input
+                    label="Título/Descripción"
+                    isRequired={true}
+                    value={form.data.description}
+                    onChange={(e) =>
+                        form.setData('description', e.target.value)
+                    }
+                />
+
+                {form.errors.description && (
+                    <p className="mt-1 text-sm text-destructive">
+                        {form.errors.description}
+                    </p>
+                )}
+            </div>
 
             <div>
                 <Input
@@ -77,22 +93,7 @@ export default function ExpenseForm({ expense, onClose }: Props) {
                 )}
             </div>
 
-            <div>
-                <Input
-                    label="Descripción"
-                    isRequired={true}
-                    value={form.data.description}
-                    onChange={(e) =>
-                        form.setData('description', e.target.value)
-                    }
-                />
-
-                {form.errors.description && (
-                    <p className="mt-1 text-sm text-destructive">
-                        {form.errors.description}
-                    </p>
-                )}
-            </div>
+            
 
             <div>
                 <Input
