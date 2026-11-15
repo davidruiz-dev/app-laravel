@@ -433,7 +433,7 @@ export default function OrderForm({
                               />
                             </div>
                             {products.length === 0 ? (
-                              <div className="text-center text-sm text-muted p-2">No se han encontrado categorías</div>
+                              <div className="text-center text-sm text-muted p-2">No se han encontrado productos</div>
                             ) : (
                               products.map((p) => (
                                 <SelectItem key={p.id} value={String(p.id)}>

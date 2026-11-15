@@ -27,7 +27,7 @@ function Field({ label, error, children, className = '', }: {
 }) {
     return (
         <label className={`block space-y-1 ${className}`}>
-            <span className="block text-sm font-medium text-gray-700">{label}</span>
+            <span className="block text-sm font-medium ">{label}</span>
             {children}
             {error && <span className="block text-xs text-red-600">{error}</span>}
         </label>
@@ -336,11 +336,11 @@ export default function ProductForm({ categories, product, searchCategory = '' }
                         {data.variants.map((v, i) => (
                             <div
                                 key={i}
-                                className="rounded-xl border border-gray-200 bg-white p-4 space-y-4"
+                                className="rounded-xl border border-border bg-surface p-4 space-y-4"
                             >
                                 {/* Cabecera */}
                                 <div className="flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-gray-800">
+                                    <h3 className="text-sm font-semibold ">
                                         Variante {i + 1}
                                     </h3>
 
@@ -359,7 +359,7 @@ export default function ProductForm({ categories, product, searchCategory = '' }
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {v.values.map((val, j) => (
                                         <div key={j} className="space-y-1">
-                                            <label className="block text-xs font-medium text-gray-600">
+                                            <label className="block text-xs font-medium">
                                                 {data.attributes[j]?.trim() ||
                                                     `Atributo ${j + 1}`}
                                             </label>
@@ -382,7 +382,7 @@ export default function ProductForm({ categories, product, searchCategory = '' }
                                 {/* Precio */}
                                 {(
                                     <div className="space-y-1">
-                                        <label className="block text-xs font-medium text-gray-600">
+                                        <label className="block text-xs font-medium">
                                             Precio (S/)
                                         </label>
 
