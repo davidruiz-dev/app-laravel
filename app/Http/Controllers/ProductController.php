@@ -79,7 +79,7 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'is_active' => ['required', 'boolean'],
-            'is_customizable' => ['boolean'],
+            'is_customizable' => ['required', 'boolean'],
 
             // Variantes opcionales
             'variants' => ['nullable', 'array'],
@@ -209,6 +209,7 @@ class ProductController extends Controller
      * Update the specified resource in storage.
      */
 
+
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -217,13 +218,14 @@ class ProductController extends Controller
             'description' => ['nullable', 'string'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             'is_active' => ['required', 'boolean'],
-            'is_customizable' => ['boolean'],
+            'is_customizable' => ['required', 'boolean'],
 
             // Variantes opcionales
             'variants' => ['nullable', 'array'],
+            'variants.*.id' => ['nullable', 'integer'],
             'variants.*.price' => ['required', 'numeric', 'min:0'],
             'variants.*.attributes' => ['nullable', 'array'],
-            'variants.*.is_active' => ['boolean'],
+            'variants.*.is_active' => ['nullable', 'boolean'],
         ]);
 
         $cloudinary = new Cloudinary(config('cloudinary.cloud_url'));
@@ -249,13 +251,13 @@ class ProductController extends Controller
                 ];
             }
 
-            // Actualizar producto existente
+            // Actualizar producto
             $product->update([
                 'category_id' => $validated['category_id'],
                 'name' => $validated['name'],
                 'description' => $validated['description'] ?? null,
                 'is_active' => $validated['is_active'],
-                'is_customizable' => $validated['is_customizable'] ?? false,
+                'is_customizable' => $validated['is_customizable'],
 
                 // Mantener imagen anterior si no se sube otra
                 'image_url' => $uploadedImage['image_url'] ?? $product->image_url,
@@ -263,21 +265,58 @@ class ProductController extends Controller
             ]);
 
             // Actualizar variantes
+            // Actualizar variantes
             if (isset($validated['variants'])) {
 
-                // Eliminar variantes anteriores
-                $product->variants()->delete();
+                $processedVariantIds = [];
 
-                // Crear las nuevas variantes
-                $product->variants()->createMany(
-                    collect($validated['variants'])->map(fn($variant) => [
-                        'price' => $variant['price'],
-                        'attributes' => $variant['attributes'] ?? [],
-                        'is_active' => $variant['is_active'] ?? true,
-                    ])->toArray()
-                );
+                foreach ($validated['variants'] as $variant) {
+
+                    if (!empty($variant['id'])) {
+
+                        $existingVariant = $product->variants()
+                            ->findOrFail($variant['id']);
+
+                        $existingVariant->update([
+                            'price' => $variant['price'],
+                            'attributes' => $variant['attributes'] ?? [],
+                            'is_active' => $variant['is_active'] ?? true,
+                        ]);
+
+                        $processedVariantIds[] = $existingVariant->id;
+                    } else {
+
+                        $newVariant = $product->variants()->create([
+                            'price' => $variant['price'],
+                            'attributes' => $variant['attributes'] ?? [],
+                            'is_active' => $variant['is_active'] ?? true,
+                        ]);
+
+                        $processedVariantIds[] = $newVariant->id;
+                    }
+                }
+
+                // Identificar variantes que fueron quitadas del formulario
+                $removedVariants = $product->variants()
+                    ->whereNotIn('id', $processedVariantIds)
+                    ->get();
+
+                foreach ($removedVariants as $variant) {
+
+                    // Comprobar si tiene pedidos relacionados
+                    if ($variant->orderItems()->exists()) {
+
+                        // Si tiene pedidos, solamente desactivar
+                        $variant->update([
+                            'is_active' => false,
+                        ]);
+                    } else {
+
+                        // Si no tiene pedidos, eliminar físicamente
+                        $variant->delete();
+                    }
+                }
             }
-
             DB::commit();
 
             // Eliminar imagen anterior solamente después del commit
@@ -306,6 +345,7 @@ class ProductController extends Controller
             ]);
         }
     }
+
 
 
     /**

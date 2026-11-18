@@ -33,7 +33,6 @@ function Field({ label, error, children, className = '', }: {
         </label>
     );
 }
-
 function buildInitial(product?: Product): ProductFormData {
     const attrs = product?.variants?.length
         ? Object.keys(product.variants[0].attributes ?? {})
@@ -49,13 +48,14 @@ function buildInitial(product?: Product): ProductFormData {
         image: null,
         is_active: product?.is_active ?? true,
 
-
         attributes: attrs,
 
         variants: product?.variants?.length
             ? product.variants.map((v) => ({
+                id: v.id, // IMPORTANTE: conservar ID
                 values: attrs.map((a) => v.attributes?.[a] ?? ''),
                 price: v.price ?? '',
+                is_active: true,
             }))
             : [emptyVariant(attrs.length)],
 
@@ -119,47 +119,56 @@ export default function ProductForm({ categories, product, searchCategory = '' }
     const addVariant = () => setData((prev) => ({ ...prev, variants: [...prev.variants, emptyVariant(prev.attributes.length)] }));
     const removeVariant = (i: number) => setData((prev) => ({ ...prev, variants: prev.variants.filter((_, idx) => idx !== i) }));
 
-    const [withVariants, setWithVariant] = useState(
-        product ? product.variants.length > 0 : false
-    );
-
     const submit = (e: FormEvent) => {
-        e.preventDefault();
+    e.preventDefault();
 
-        transform((d) => {
-            const names = d.attributes.map((a) => a.trim());
-            const keep = names.map((n, i) => (n ? i : -1)).filter((i) => i >= 0);
-            const isVariant = d.variants.length !== 0;
-            //const isCustom = d.pricing_type === 'custom';
+    transform((d) => {
+        const names = d.attributes.map((a) => a.trim());
 
-            return {
-                category_id: d.category_id,
-                name: d.name,
-                description: d.description,
-                is_active: d.is_active,
-                is_customizable: d.is_customizable,
-                variant_attributes: isVariant ? keep.map((i) => names[i]) : [],
-                variants: isVariant
-                    ? d.variants
-                        .filter((v) => v.values.some((x) => x.trim() !== ''))
-                        .map((v) => ({
-                            attributes: Object.fromEntries(keep.map((i) => [names[i], v.values[i].trim()])),
-                            price: v.price,
-                        }))
-                    : [],
-                ...(d.image ? { image: d.image } : {}),
-                // multipart no soporta PUT nativo: spoofing de método
-                ...(isEdit ? { _method: 'put' } : {}),
-            };
-        });
+        const keep = names
+            .map((n, i) => (n ? i : -1))
+            .filter((i) => i >= 0);
 
-        post(isEdit ? `/products/${product!.id}` : '/products', {
-            forceFormData: true,
-            onSuccess: () => console.log('Producto guardado correctamente'),
-            onError: (errors) => console.log('Errores:', errors),
-        });
-    };
+        const isVariant = d.variants.length !== 0;
 
+        return {
+            category_id: d.category_id,
+            name: d.name,
+            description: d.description,
+            is_active: d.is_active,
+            is_customizable: d.is_customizable,
+
+            variant_attributes: isVariant
+                ? keep.map((i) => names[i])
+                : [],
+
+            variants: isVariant
+                ? d.variants
+                    .filter((v) => v.values.some((x) => x.trim() !== ''))
+                    .map((v) => ({
+                        ...(v.id ? { id: v.id } : {}),
+                        attributes: Object.fromEntries(
+                            keep.map((i) => [
+                                names[i],
+                                v.values[i].trim()
+                            ])
+                        ),
+                        price: v.price,
+                        is_active: v.is_active ?? true,
+                    }))
+                : [],
+
+            ...(d.image ? { image: d.image } : {}),
+            ...(isEdit ? { _method: 'put' } : {}),
+        };
+    });
+
+    post(isEdit ? `/products/${product!.id}` : '/products', {
+        forceFormData: true,
+        onSuccess: () => console.log('Producto guardado correctamente'),
+        onError: (errors) => console.log('Errores:', errors),
+    });
+};
 
     useEffect(() => {
         const timeout = window.setTimeout(() => {

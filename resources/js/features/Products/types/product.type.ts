@@ -24,9 +24,11 @@ export type ProductVariant = {
     updated_at: string;
 }
 
-export type VariantRow = { 
-    values: string[]; 
-    price: string; 
+export type VariantRow = {
+    id?: number;
+    values: string[];
+    price: string;
+    is_active?: boolean;
 };
 
 export type ProductFormData = {

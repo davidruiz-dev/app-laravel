@@ -222,7 +222,7 @@ class OrderController extends Controller
             })
             ->orderBy('name')
             ->limit(15)
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'is_customizable']);
 
         return Inertia::render('Orders/Create', [
             'customers' => $customers,

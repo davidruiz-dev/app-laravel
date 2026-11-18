@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { router, useForm } from "@inertiajs/react";
-import { Ban, CheckCircle2, Pencil, Phone, Plus, Save, Search, ShieldCheck, Store, Trash, Truck, User, X, } from "lucide-react";
+import { Ban, CheckCircle2, Lock, Pencil, Phone, Plus, Save, Search, ShieldCheck, Store, Trash, Truck, User, X, } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/Card";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
@@ -105,7 +105,7 @@ export default function OrderForm({
         console.log('Antes de cerrar:', showModalCancelled);
         setShowModalCancelled(false);
       },
-      
+
     });
   };
 
@@ -119,7 +119,7 @@ export default function OrderForm({
         console.log(errors);
       },
       onFinish: () => {
-          console.log("Solicitud finalizada");
+        console.log("Solicitud finalizada");
       },
     });
   };
@@ -389,6 +389,7 @@ export default function OrderForm({
             <div className="space-y-4">
               {form.data.items.map((item, index) => {
                 const product = products.find((p) => p.id === item.product_id);
+                const isCustomizable = Boolean(product?.is_customizable);
                 return (
                   <div key={item._key} className="mb-1.5 space-y-4 rounded-lg border border-border p-4">
                     <div className="flex items-center justify-between">
@@ -476,10 +477,10 @@ export default function OrderForm({
                       )}
 
                       {error(`items.${index}.variant_id`) && (
-    <p className="mt-1 text-sm text-destructive">
-        {error(`items.${index}.variant_id`)}
-    </p>
-)}
+                        <p className="mt-1 text-sm text-destructive">
+                          {error(`items.${index}.variant_id`)}
+                        </p>
+                      )}
                     </div>
 
                     <Textarea
@@ -490,10 +491,10 @@ export default function OrderForm({
                       rows={3}
                     />
                     {error(`items.${index}.details`) && (
-    <p className="mt-1 text-sm text-destructive">
-        {error(`items.${index}.details`)}
-    </p>
-)}
+                      <p className="mt-1 text-sm text-destructive">
+                        {error(`items.${index}.details`)}
+                      </p>
+                    )}
 
 
                     <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
@@ -506,23 +507,41 @@ export default function OrderForm({
                           onChange={(event) => updateItem(index, "quantity", Math.max(1, Number(event.target.value)))}
                         />
 
-                        <div className="flex gap-1 items-end">
-                          <Input
-                            label="Precio final (editable)"
-                            type="number"
-                            min="0"
-                            step="1.00"
-                            disabled={isPriceEditable}
-                            value={item.unit_price}
-                            onChange={(event) =>
-                              updateItem(index, "unit_price", event.target.value)
-                            }
-                          />
-                          <Button variant="secondary" type="button" onClick={() => setIsPriceEditable(v => !v)}>
-                            {isPriceEditable ? (<Pencil size={17} />) : (<Ban size={17} />)}
-                          </Button>
-                        </div>
-
+                        <Input
+                          label="Precio"
+                          type="number"
+                          min="0"
+                          step="1.00"
+                          disabled={!isCustomizable}
+                          value={item.unit_price}
+                          onChange={(event) =>
+                            updateItem(index, "unit_price", event.target.value)
+                          }
+                        />
+                        {product && (
+                          <div
+                            className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${isCustomizable
+                                ? 'border-blue-200 bg-blue-50 text-blue-800'
+                                : 'border-amber-200 bg-amber-50 text-amber-800'
+                              }`}
+                          >
+                            {isCustomizable ? (
+                              <>
+                                <Pencil size={17} />
+                                <span>
+                                  <strong>Precio personalizable.</strong> Puedes modificar el precio al crear el pedido.
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Lock size={17} />
+                                <span>
+                                  <strong>Precio fijo.</strong> Se utilizará el precio establecido en la variante.
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="mb-1.5 block text-sm font-medium">Imagen de referencia</label>

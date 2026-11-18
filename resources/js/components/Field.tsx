@@ -13,7 +13,7 @@ export function Field({
 }) {
   return (
     <label className={`block space-y-1 ${className}`}>
-      <span className="block text-sm font-medium text-gray-700">{label}</span>
+      <span className="block text-sm font-medium">{label}</span>
       {children}
       {error && <span className="block text-xs text-red-600">{error}</span>}
     </label>
