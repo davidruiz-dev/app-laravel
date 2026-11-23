@@ -25,7 +25,7 @@ class OrderItem extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:2',
         'line_total' => 'decimal:2',
-    ];
+    ];  
 
     protected $guarded = ['line_total'];
 
