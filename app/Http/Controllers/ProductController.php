@@ -10,7 +10,6 @@ use Cloudinary\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Throwable;
 
 class ProductController extends Controller
 {

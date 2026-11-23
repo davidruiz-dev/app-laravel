@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Order;
-use App\Models\Orderitem;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -21,7 +20,7 @@ class CustomerController extends Controller
         $customers = Customer::query()
             ->withCount('orders')
             ->addSelect([
-                'last_order' => Orderitem::query()
+                'last_order' => OrderItem::query()
                     ->select('order_items.product_name')
                     ->join('orders', 'orders.id', '=', 'order_items.order_id')
                     ->whereColumn('orders.customer_id', 'customers.id')

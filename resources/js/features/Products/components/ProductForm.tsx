@@ -194,7 +194,7 @@ export default function ProductForm({ categories, product, searchCategory = '' }
         <form onSubmit={submit} className="max-w-4xl space-y-6">
             <div>
                 <h1 className="text-2xl md:text-3xl font-semibold">{isEdit ? 'Editar producto' : 'Nuevo producto'}</h1>
-                <p className="text-sm text-gray-500">Define la información del producto y cómo se calcula su precio.</p>
+                <p className="text-sm text-muted">Define la información del producto y cómo se calcula su precio.</p>
             </div>
             <Card>
                 <CardHeader>
@@ -304,14 +304,14 @@ export default function ProductForm({ categories, product, searchCategory = '' }
                 <CardHeader>
                     <div className="flex items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-900">Variantes</h2>
-                            <p className="text-sm text-gray-500">Primero nombra los atributos (Unidades, Sabor, Tamaño...) y luego crea por combinación.</p>
+                            <h2 className="text-lg font-semibold">Variantes</h2>
+                            <p className="text-sm text-muted">Primero nombra los atributos (Unidades, Sabor, Tamaño...) y luego crea por combinación.</p>
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <span className="block text-sm font-medium text-gray-700">Atributos para cada variante</span>
+                        <span className="block text-sm font-medium">Atributos para cada variante</span>
                         {err('variant_attributes') && <p className="text-xs text-red-600">{err('variant_attributes')}</p>}
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className='flex flex-wrap gap-2'>

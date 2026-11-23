@@ -18,7 +18,7 @@ function StatCard({
     icon: React.ReactNode;
 }) {
     return (
-        <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm transition hover:shadow-md">
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-sm font-medium text-gray-500">{label}</p>
@@ -99,13 +99,13 @@ function OrderRow({ order, productId }: { order: Order; productId: number }) {
     return (
         <>
             <tr
-                className="cursor-pointer border-b border-gray-100 transition hover:bg-gray-50"
+                className="cursor-pointer border-b border-border transition hover:bg-background"
                 onClick={() => setExpanded(!expanded)}
             >
-                <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900">
+                <td className="whitespace-nowrap px-4 py-3 text-sm font-medium ">
                     <div className="flex items-center gap-2">
                         <svg
-                            className={`h-4 w-4 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''
+                            className={`h-4 w-4 text-muted transition-transform ${expanded ? 'rotate-90' : ''
                                 }`}
                             fill="none"
                             viewBox="0 0 24 24"
@@ -121,10 +121,10 @@ function OrderRow({ order, productId }: { order: Order; productId: number }) {
                         {order.id}
                     </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
+                <td className="px-4 py-3 text-sm ">
                     <div className="flex flex-col">
                         <span className="font-medium">{order.customer?.full_name}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted">
                             {order.customer?.email}
                         </span>
                     </div>
@@ -136,23 +136,23 @@ function OrderRow({ order, productId }: { order: Order; productId: number }) {
                         {status}
                     </span>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700">
+                <td className="whitespace-nowrap px-4 py-3 text-sm">
                     {formatDate(order.created_at)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold text-gray-900">
+                <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold ">
                     {formatCurrency(productTotal.toFixed(2))}
                 </td>
             </tr>
             {expanded && (
                 <tr className="bg-gray-50/70">
                     <td colSpan={5} className="px-4 py-3">
-                        <div className="rounded-lg border border-gray-200 bg-white p-3">
-                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <div className="rounded-lg border border-border bg-surface p-3">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">
                                 Items de este producto
                             </p>
                             <table className="w-full text-sm">
                                 <thead>
-                                    <tr className="text-left text-xs text-gray-500">
+                                    <tr className="text-left text-xs text-muted">
                                         <th className="pb-1">Variante</th>
                                         <th className="pb-1 text-center">Cant.</th>
                                         <th className="pb-1 text-right">
@@ -165,9 +165,9 @@ function OrderRow({ order, productId }: { order: Order; productId: number }) {
                                     {productItems.map((item) => (
                                         <tr
                                             key={item.id}
-                                            className="border-t border-gray-100"
+                                            className="border-t border-border"
                                         >
-                                            <td className="py-2 text-gray-700">
+                                            <td className="py-2">
                                                 {item.product_variant?.attributes
                                                     ? Object.entries(
                                                         item.product_variant
@@ -182,13 +182,13 @@ function OrderRow({ order, productId }: { order: Order; productId: number }) {
                                                     '—'
                                                     }`}
                                             </td>
-                                            <td className="py-2 text-center text-gray-700">
+                                            <td className="py-2 text-center">
                                                 {item.quantity}
                                             </td>
-                                            <td className="py-2 text-right text-gray-700">
+                                            <td className="py-2 text-right">
                                                 {formatCurrency(item.unit_price)}
                                             </td>
-                                            <td className="py-2 text-right font-semibold text-gray-900">
+                                            <td className="py-2 text-right font-semibold">
                                                 {formatCurrency(item.line_total)}
                                             </td>
                                         </tr>
@@ -229,7 +229,7 @@ export default function Show({ product, orders, stats }: Props) {
 
             <div className="">
                 {/* Breadcrumb */}
-                <nav className="mb-6 flex items-center gap-2 text-sm text-gray-500">
+                <nav className="mb-6 flex items-center gap-2 text-sm text-muted">
                     <Link
 
                         className="hover:text-indigo-600"
@@ -237,7 +237,7 @@ export default function Show({ product, orders, stats }: Props) {
                         Productos
                     </Link>
                     <span>/</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium ">
                         {product.name}
                     </span>
                 </nav>
@@ -245,13 +245,13 @@ export default function Show({ product, orders, stats }: Props) {
                 {/* Header */}
                 <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                        <h1 className="text-2xl font-bold text-gray-900">
+                        <h1 className="text-2xl font-bold ">
                             {product.name}
                         </h1>
                         <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${product.is_active
                                     ? 'bg-green-100 text-green-800 ring-green-600/20'
-                                    : 'bg-gray-100 text-gray-800 ring-gray-600/20'
+                                    : 'bg-gray-100 ring-gray-600/20'
                                 }`}
                         >
                             {product.is_active ? 'Activo' : 'Inactivo'}
@@ -364,7 +364,7 @@ export default function Show({ product, orders, stats }: Props) {
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Columna izquierda: info del producto */}
                     <div className="lg:col-span-1">
-                        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                        <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
                             {product.image_url ? (
                                 <img
                                     src={product.image_url}
@@ -372,9 +372,9 @@ export default function Show({ product, orders, stats }: Props) {
                                     className="aspect-square w-full object-cover"
                                 />
                             ) : (
-                                <div className="flex aspect-square w-full items-center justify-center bg-gray-100">
+                                <div className="flex aspect-square w-full items-center justify-center bg-background">
                                     <svg
-                                        className="h-16 w-16 text-gray-300"
+                                        className="h-16 w-16 text-muted"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -394,10 +394,10 @@ export default function Show({ product, orders, stats }: Props) {
 
 
                                     <div>
-                                        <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
                                             Categoría
                                         </dt>
-                                        <dd className="mt-1 text-sm text-gray-700">
+                                        <dd className="mt-1 text-sm ">
                                             {product.category?.name ?? (
                                                 <span className="italic text-gray-400">
                                                     Sin categoría
@@ -406,10 +406,10 @@ export default function Show({ product, orders, stats }: Props) {
                                         </dd>
                                     </div>
                                     <div>
-                                        <dt className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                        <dt className="text-xs font-semibold uppercase tracking-wide text-muted">
                                             Descripción
                                         </dt>
-                                        <dd className="mt-1 whitespace-pre-line text-sm text-gray-700">
+                                        <dd className="mt-1 whitespace-pre-line text-sm ">
                                             {product.description ?? (
                                                 <span className="italic text-gray-400">
                                                     Sin descripción
@@ -425,9 +425,9 @@ export default function Show({ product, orders, stats }: Props) {
 
                     {/* Columna derecha: tabs variantes / pedidos */}
                     <div className="lg:col-span-2">
-                        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                        <div className="rounded-xl border border-border bg-surface shadow-sm">
                             {/* Tabs */}
-                            <div className="border-b border-gray-200">
+                            <div className="border-b border-border">
                                 <nav className="flex gap-1 px-4">
                                     <button
                                         onClick={() => setActiveTab('variants')}
@@ -487,7 +487,7 @@ export default function Show({ product, orders, stats }: Props) {
                                             <div className="overflow-x-auto">
                                                 <table className="w-full">
                                                     <thead>
-                                                        <tr className="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                        <tr className="border-b border-border text-left text-xs font-semibold uppercase tracking-wide text-muted">
                                                             <th className="px-4 py-2">
                                                                 Pedido
                                                             </th>
