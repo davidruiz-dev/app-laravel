@@ -239,7 +239,7 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-       Log::info('PASO 1: Entró al store');
+      
         $validated = $request->validate([
             // Cliente
             'customer_id' => [
@@ -285,7 +285,7 @@ class OrderController extends Controller
                 'nullable',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
-                'max:5120',
+                'max:7120',
             ],
 
             // Pagos
@@ -296,9 +296,6 @@ class OrderController extends Controller
             'payments.*.paid_at' => ['required', 'date'],
         ]);
 
-        Log::info('PASO 2: Validación completada', [
-        'items' => count($validated['items']),
-    ]);
         $cloudinary = new Cloudinary(
             config('cloudinary.cloud_url')
         );
@@ -308,21 +305,19 @@ class OrderController extends Controller
         try {
             // 1. Subir imágenes a Cloudinary
             foreach ($validated['items'] as $index => $item) {
-                 Log::info("PASO 3: Procesando imagen {$index}");
+                
                 $file = $request->file("items.$index.image");
 
                 if (!$file) {
                     continue;
                 }
 
-                Log::info("PASO 4: Subiendo imagen {$index}");
                 $result = $cloudinary->uploadApi()->upload(
                     $file->getRealPath(),
                     [
                         'folder' => 'my-app/order-items',
                     ]
                 );
-                Log::info("PASO 5: Imagen subida {$index}");
 
                 $uploadedImages[$index] = [
                     'reference_image_url' => $result['secure_url'],
@@ -330,13 +325,11 @@ class OrderController extends Controller
                 ];
             }
 
-            Log::info('PASO 6: Antes de la transacción');
             // 2. Registrar pedido y sus relaciones
             DB::transaction(function () use (
                 $validated,
                 $uploadedImages
             ) {
-                Log::info('PASO 7: Dentro de la transacción');
                 // Obtener o crear cliente
                 if (!empty($validated['customer_id'])) {
                     $customerId = $validated['customer_id'];
@@ -425,9 +418,7 @@ class OrderController extends Controller
                     ]);
                 }
 
-                Log::info('PASO 8: Transacción completada');
             });
-            Log::info('PASO 9: Después de la transacción');
         } catch (Throwable $e) {
             // Eliminar imágenes si falla el registro
             foreach ($uploadedImages as $image) {
@@ -534,7 +525,7 @@ class OrderController extends Controller
                 'nullable',
                 'image',
                 'mimes:jpg,jpeg,png,webp',
-                'max:5120',
+                'max:7120',
             ],
 
             'items.*.remove_image' => ['nullable', 'boolean'],
