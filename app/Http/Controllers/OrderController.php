@@ -198,7 +198,7 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'search_customer' => ['nullable', 'string', 'min:1', 'max:100'],
-            'search_category' => ['nullable', 'string', 'min:1', 'max:100'],
+            'search_product' => ['nullable', 'string', 'min:1', 'max:100'],
         ]);
 
         $searchCustomer = trim($validated['search_customer'] ?? '');
