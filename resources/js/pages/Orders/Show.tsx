@@ -1,6 +1,7 @@
 import Button from "@/components/Button";
 import { Card, CardContent, CardHeader } from "@/components/Card";
 import Modal from "@/components/Modal";
+import PhoneNumber from "@/features/customers/components/PhoneNumber";
 import FormPayment from "@/features/Orders/components/FormPayment";
 import { OrderStatusBadge } from "@/features/Orders/components/OrderStatusBadge";
 import { Order, OrderItem, OrderStatus } from "@/features/Orders/types/order.types";
@@ -83,10 +84,10 @@ function OrderItemRow({ item }: { item: OrderItem }) {
                 <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                         <h3 className="truncate text-base font-semibold text-foreground">
-                            {item.product_name} 
+                            {item.product_name}
                         </h3>
                         <p className="text-muted text-sm">{item.variant_name}</p>
-                        
+
                         {item.variant?.product?.category?.name && (
                             <span className="mt-0.5 inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
                                 {item.variant?.product.category?.name}
@@ -235,7 +236,7 @@ export default function ShowOrder({ order }: ShowOrderProps) {
 
                             <div className="flex items-center gap-1">
                                 <Clock size={15} />
-                                Turno {order.delivery_shift}
+                                Turno {order.delivery_shift === 'morning' ? 'Mañana' : 'Tarde'}
                             </div>
                         </div>
                     </div>
@@ -420,7 +421,12 @@ export default function ShowOrder({ order }: ShowOrderProps) {
 
                                             <InfoRow
                                                 label="Teléfono"
-                                                value={order.customer.phone || '—'}
+                                                value={(
+                                                    <PhoneNumber
+                                                        phone={order.customer.phone}
+                                                        canReveal={true}
+                                                    />
+                                                )}
                                             />
                                         </>
                                     ) : (
