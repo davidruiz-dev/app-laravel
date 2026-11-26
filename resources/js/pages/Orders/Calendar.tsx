@@ -154,7 +154,7 @@ export default function Calendar({
                         )}
                         {order.delivery_shift && (
                             <div className="flex gap-1 items-center text-xs">
-                                <Clock size={12} className="" /> {order.delivery_shift}
+                                <Clock size={12} className="" /> {order.delivery_shift === 'morning' ? 'Mañana' : 'Tarde' }
                             </div>
                         )}
                     </div>
@@ -324,7 +324,7 @@ export default function Calendar({
                     {[
                         ["pending", "Pendiente"],
                         ["in_progress", "En preparación"],
-                        ["ready", "Completado"],
+                        ["ready", "Para entregar"],
                     ].map(([status, label]) => (
                         <div key={status} className="flex items-center gap-2">
                             <span

@@ -239,7 +239,7 @@ class OrderController extends Controller
 
     public function store(Request $request)
     {
-      
+
         $validated = $request->validate([
             // Cliente
             'customer_id' => [
@@ -305,7 +305,7 @@ class OrderController extends Controller
         try {
             // 1. Subir imágenes a Cloudinary
             foreach ($validated['items'] as $index => $item) {
-                
+
                 $file = $request->file("items.$index.image");
 
                 if (!$file) {
@@ -417,7 +417,6 @@ class OrderController extends Controller
                         'paid_at' => $payment['paid_at'],
                     ]);
                 }
-
             });
         } catch (Throwable $e) {
             // Eliminar imágenes si falla el registro
@@ -464,33 +463,43 @@ class OrderController extends Controller
     {
         $order->load([
             'customer',
-            'items.category',
+            'items.variant',
         ]);
         $validated = $request->validate([
-            'search' => ['nullable', 'string', 'min:1', 'max:100'],
+            'search_customer' => ['nullable', 'string', 'min:1', 'max:100'],
+            'search_product' => ['nullable', 'string', 'min:1', 'max:100'],
         ]);
 
-        $search = trim($validated['search'] ?? '');
+        $searchCustomer = trim($validated['search_customer'] ?? '');
+        $searchProduct = trim($validated['search_product'] ?? '');
 
         $customers = Customer::query()
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('full_name', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+            ->when($searchCustomer !== '', function ($query) use ($searchCustomer) {
+                $query->where(function ($query) use ($searchCustomer) {
+                    $query->where('full_name', 'like', "%{$searchCustomer}%")
+                        ->orWhere('phone', 'like', "%{$searchCustomer}%");
                 });
             })
             ->orderBy('full_name')
-            ->limit(10)
+            ->limit(15)
             ->get(['id', 'full_name', 'phone']);
 
-        $categories = Category::query()->latest()->get();
+        $products = Product::query()
+            ->with(['category', 'variants'])
+            ->when($searchProduct !== '', function ($query) use ($searchProduct) {
+                $query->where('name', 'like', "%{$searchProduct}%");
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'is_customizable']);
 
         return Inertia::render('Orders/Update', [
             'order' => $order,
             'customers' => $customers,
-            'categories' => $categories,
+            'products' => $products,
             'filters' => [
-                'search' => $search,
+                'search_customer' => $searchCustomer,
+                'search_product' => $searchProduct,
             ],
         ]);
     }

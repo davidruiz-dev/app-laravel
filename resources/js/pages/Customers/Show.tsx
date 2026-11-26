@@ -18,7 +18,7 @@ interface CustomerShowProps {
   orders: Paginated<Order>;
 }
 
-const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'in_progress', 'completed'];
+const ACTIVE_STATUSES: OrderStatus[] = ['pending', 'in_progress', 'ready'];
 const MAX_VISIBLE_ITEMS = 3;
 
 
@@ -40,7 +40,7 @@ const pluralDays = (n: number) => `${n} ${n === 1 ? 'día' : 'días'}`;
 function DeadlineBadge({ order }: { order: Order }) {
   if (!isActive(order)) return null;
 
-  const days = daysUntil(order.date);
+  const days = daysUntil(order.order_date);
   const { label, className } =
     days < 0
       ? { label: `Atrasado ${pluralDays(Math.abs(days))}`, className: 'bg-destructive/20 text-destructive' }
@@ -54,7 +54,7 @@ function DeadlineBadge({ order }: { order: Order }) {
 }
 
 function OrderCard({ order }: { order: Order }) {
-  const late = isActive(order) && daysUntil(order.date) < 0;
+  const late = isActive(order) && daysUntil(order.order_date) < 0;
   const visibleItems = order.items.slice(0, MAX_VISIBLE_ITEMS);
   const hiddenCount = order.items.length - visibleItems.length;
 
@@ -69,10 +69,10 @@ function OrderCard({ order }: { order: Order }) {
           <p className="font-semibold">Pedido #{order.id}</p>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             <span className="flex items-center gap-1.5">
-              <Calendar1Icon size={14} /> {formatDate(order.date)}
+              <Calendar1Icon size={14} /> {formatDate(order.order_date)}
             </span>
             <span className="flex items-center gap-1.5">
-              <Clock size={14} /> Turno {order.shift}
+              <Clock size={14} /> Turno {order.delivery_shift}
             </span>
           </div>
         </div>
@@ -83,7 +83,7 @@ function OrderCard({ order }: { order: Order }) {
       <ul className="mt-3 space-y-1 text-sm text-muted">
         {visibleItems.map((item) => (
           <li key={item.id} className="truncate">
-            {item.quantity}x {item.name}
+            {item.quantity}x {item.product_name}
           </li>
         ))}
         {hiddenCount > 0 && <li>y {hiddenCount} más…</li>}

@@ -1,12 +1,10 @@
 import Button from '@/components/Button'
-import Input from '@/components/Input'
 import Layout from '@/layouts/Layout'
-import { Ban, Check, Clock, LoaderCircle, PlusIcon, Search, Timer, Truck } from 'lucide-react'
+import { Ban, Check, Clock, LoaderCircle, PlusIcon, Timer, Truck } from 'lucide-react'
 import { Link, router } from '@inertiajs/react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/Table'
 import { formatDate, formatDateTime } from '@/utils/date'
 import { OrderStatCard } from '@/features/Orders/components/OrderStatCard'
-import { orderStatusTypeLabels } from '@/utils/order.util'
 import { Order, OrdersOverview, OrderStatus } from '@/features/Orders/types/order.types'
 import { Paginated } from '@/types'
 import OrdersFilter from '@/features/Orders/components/OrdersFilter'
@@ -28,7 +26,6 @@ interface Props {
     date_to?: string;
   };
 }
-
 
 export default function Index({ orders, overview, filters }: Props) {
   const [search, setSearch] = useState(filters.search ?? '');
@@ -169,7 +166,7 @@ export default function Index({ orders, overview, filters }: Props) {
                       {formatDate(order.order_date)} {order.delivery_shift && (
                         <div className='flex items-center gap-1 text-sm'>
                           <Clock size={17} />
-                          <span>{order.delivery_shift}</span>
+                          <span>{order.delivery_shift === 'morning' ? 'Mañana' : 'Tarde'}</span>
                         </div>
                       )}
                     </div>

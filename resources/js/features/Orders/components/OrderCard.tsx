@@ -20,7 +20,7 @@ export function OrderCard({ order }: OrderCardProps) {
 
     const getButtonText = (order: Order) => {
         if (order.status === 'pending') {
-            return 'Iniciar producción'
+            return 'Iniciar preparación'
         } else if (order.status === 'in_progress') {
             return 'Pedido listo '
         } else if (order.status === 'ready') {
@@ -60,7 +60,7 @@ export function OrderCard({ order }: OrderCardProps) {
                 <div className="bg-red-400/90 p-3 flex flex-col items-center gap-1 justify-center text-white border-r border-surface border-dashed">
                     <span className="text-3xl font-bold">{getDay(order.order_date)}</span>
                     <span className="text-xs lowercase">{getMonth(order.order_date)}</span>
-                    <span className="text-xs">T-{order.delivery_shift}</span>
+                    <span className="text-xs">T-{order.delivery_shift === 'morning' ? 'Mañana' : 'Tarde'}</span>
                 </div>
 
                 <div className="p-3 bg-background flex-1 space-y-3">

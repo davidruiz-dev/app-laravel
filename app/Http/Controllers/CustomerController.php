@@ -76,7 +76,7 @@ class CustomerController extends Controller
     public function show(Customer $customer)
     {
         $orders = $customer->orders()
-            ->with('items.category')
+            ->with('items.variant')
             ->latest()
             ->paginate(10)
             ->withQueryString();
