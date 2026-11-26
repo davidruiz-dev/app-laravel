@@ -274,7 +274,14 @@ export default function OrderForm({
     //   _method: isEditing ? "patch" : undefined,
     // }) as OrderFormData);
 
-    const url = isEditing ? updateUrl ?? `/orders/${order!.id}` : storeUrl;
+    const url = isEditing
+      ? updateUrl ?? `/orders/${order!.id}`
+      : storeUrl;
+
+    form.transform((data) => ({
+      ...data,
+      _method: isEditing ? "PUT" : "POST",
+    }));
 
     form.post(url, {
       forceFormData: true,
@@ -285,10 +292,11 @@ export default function OrderForm({
       },
 
       onSuccess: () => {
-        console.log("Orden guardada correctamente");
-      },
-      onFinish: () => {
-        console.log('Petición finalizada');
+        console.log(
+          isEditing
+            ? "Pedido actualizado correctamente"
+            : "Pedido registrado correctamente"
+        );
       },
     });
   };
@@ -521,8 +529,8 @@ export default function OrderForm({
                         {product && (
                           <div
                             className={`flex items-center gap-2 rounded-lg border p-3 text-sm ${isCustomizable
-                                ? 'border-blue-200 bg-blue-50 text-blue-800'
-                                : 'border-amber-200 bg-amber-50 text-amber-800'
+                              ? 'border-blue-200 bg-blue-50 text-blue-800'
+                              : 'border-amber-200 bg-amber-50 text-amber-800'
                               }`}
                           >
                             {isCustomizable ? (
